@@ -350,16 +350,13 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
     }, 4000);
     return () => clearTimeout(t);
   }, []);
-  // Show the venue tip a few seconds after the user arrives on Book — enough
-  // time to read the login page and sign in. Dismissed state is persisted.
+  // Show the venue tip a few seconds after the user arrives on Book.
   useEffect(() => {
-    if (localStorage.getItem("pf-venue-tip-dismissed") === "1") return;
     const t = setTimeout(() => setShowVenueTip(true), 10000);
     return () => clearTimeout(t);
   }, []);
   const dismissVenueTip = () => {
     setShowVenueTip(false);
-    localStorage.setItem("pf-venue-tip-dismissed", "1");
   };
   return (
     <div className="screen screen-fixed">
