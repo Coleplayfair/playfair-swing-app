@@ -16,8 +16,10 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
   .app{min-height:680px;box-shadow:0 8px 40px rgba(0,0,0,0.12)}
 }
 
-.screen{display:flex;flex-direction:column;min-height:100vh}
+.screen{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
 @media (min-width:640px){ .screen{min-height:680px} }
+.screen.screen-fixed{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+@media (min-width:640px){ .screen.screen-fixed{height:680px} }
 
 /* TOP BAR */
 .top-bar{background:#094811;padding:52px 20px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
