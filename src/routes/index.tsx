@@ -392,12 +392,14 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
           </div>
         )}
         {showHint && (
-          <button type="button" className="venues-hint" onClick={dismissHint} aria-label="Dismiss hint">
-            <div className="venues-hint-bubble">Click here for your venues</div>
-            <svg className="venues-hint-arrow" viewBox="0 0 80 100" width="64" height="80">
-              <path d="M14 6 C 50 30, 60 60, 56 86" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round"/>
-              <path d="M48 78 L 56 90 L 66 80" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+          <button type="button" className="venues-hint" onClick={dismissHint} onTouchEnd={(e) => { e.preventDefault(); dismissHint(); }} aria-label="Dismiss hint">
+            <span className="venues-hint-inner">
+              <span className="venues-hint-bubble">Click here for your venues</span>
+              <svg className="venues-hint-arrow" viewBox="0 0 80 100" width="64" height="80">
+                <path d="M14 6 C 50 30, 60 60, 56 86" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round"/>
+                <path d="M48 78 L 56 90 L 66 80" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
           </button>
         )}
       </div>
