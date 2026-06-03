@@ -109,7 +109,13 @@ function PlayfairApp() {
         />
       )}
 
-      {screen === "book" && <BookScreen active="book" onTab={go} />}
+      {/* Persistent webview — mounted once after first visit and kept alive
+          so the YGB session is not lost when switching tabs. */}
+      {(screen === "book" || screen === "bag" || screen === "profile") && (
+        <div style={{ display: screen === "book" ? "block" : "none", height: "100%" }}>
+          <BookScreen active="book" onTab={go} />
+        </div>
+      )}
 
       {screen === "bag" && (
         <BagScreen
