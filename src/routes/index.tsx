@@ -338,7 +338,6 @@ function SetupScreen(props: {
 function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
   const [frameError, setFrameError] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const loadCountRef = useRef(0);
   const url = "https://yourgolfbooking.com/account/login";
   useEffect(() => {
     const t = setTimeout(() => {
@@ -351,16 +350,15 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
     }, 4000);
     return () => clearTimeout(t);
   }, []);
-  // The iframe is cross-origin so we can't read its URL. But every navigation
-  // inside it (including the post-login redirect) fires a `load` event on the
-  // iframe element. First load = the login page itself; any subsequent load
-  // means the user navigated — almost always because they signed in.
-  const onFrameLoad = () => {
-    loadCountRef.current += 1;
-    if (loadCountRef.current >= 2 && localStorage.getItem("pf-venues-hint-dismissed") !== "1") {
-      setShowHint(true);
-    }
-  };
+  // Show the "Click here for your venues" hint a few seconds after the user
+  // arrives on Book — enough time to read the login page and sign in. Cross-
+  // origin restrictions mean we can't detect the actual login event from the
+  // YGB iframe, so a delay is the most reliable trigger.
+  useEffect(() => {
+    if (localStorage.getItem("pf-venues-hint-dismissed") === "1") return;
+    const t = setTimeout(() => setShowHint(true), 10000);
+    return () => clearTimeout(t);
+  }, []);
   const dismissHint = () => {
     setShowHint(false);
     localStorage.setItem("pf-venues-hint-dismissed", "1");
@@ -384,7 +382,6 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
           src={url}
           title="yourgolfbooking.com"
           referrerPolicy="no-referrer"
-          onLoad={onFrameLoad}
         />
         {frameError && (
           <div className="webview-fallback">
