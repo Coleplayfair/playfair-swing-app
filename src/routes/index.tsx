@@ -337,14 +337,13 @@ function SetupScreen(props: {
 /* ───── BOOK ───── */
 function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
   const [frameError, setFrameError] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const loadCountRef = useRef(0);
   const url = "https://yourgolfbooking.com/account/login";
-  // Some sites set X-Frame-Options/CSP which blocks embedding. We optimistically render
-  // the WebView (iframe) and offer a fallback link if it can't load.
   useEffect(() => {
     const t = setTimeout(() => {
       const f = document.getElementById("playfair-webview") as HTMLIFrameElement | null;
       try {
-        // Cross-origin access throws; if no throw and no document, likely blocked.
         if (f && !f.contentWindow?.location?.href) setFrameError(true);
       } catch {
         /* cross-origin — normal */
@@ -352,6 +351,20 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
     }, 4000);
     return () => clearTimeout(t);
   }, []);
+  // The iframe is cross-origin so we can't read its URL. But every navigation
+  // inside it (including the post-login redirect) fires a `load` event on the
+  // iframe element. First load = the login page itself; any subsequent load
+  // means the user navigated — almost always because they signed in.
+  const onFrameLoad = () => {
+    loadCountRef.current += 1;
+    if (loadCountRef.current >= 2 && localStorage.getItem("pf-venues-hint-dismissed") !== "1") {
+      setShowHint(true);
+    }
+  };
+  const dismissHint = () => {
+    setShowHint(false);
+    localStorage.setItem("pf-venues-hint-dismissed", "1");
+  };
   return (
     <div className="screen screen-fixed">
       <div className="notice">
@@ -371,6 +384,7 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
           src={url}
           title="yourgolfbooking.com"
           referrerPolicy="no-referrer"
+          onLoad={onFrameLoad}
         />
         {frameError && (
           <div className="webview-fallback">
@@ -380,13 +394,15 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
             </p>
           </div>
         )}
-        <div className="venues-hint" aria-hidden="false">
-          <div className="venues-hint-bubble">Click here for your venues</div>
-          <svg className="venues-hint-arrow" viewBox="0 0 80 100" width="64" height="80">
-            <path d="M14 6 C 50 30, 60 60, 56 86" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round"/>
-            <path d="M48 78 L 56 90 L 66 80" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
+        {showHint && (
+          <button type="button" className="venues-hint" onClick={dismissHint} aria-label="Dismiss hint">
+            <div className="venues-hint-bubble">Click here for your venues</div>
+            <svg className="venues-hint-arrow" viewBox="0 0 80 100" width="64" height="80">
+              <path d="M14 6 C 50 30, 60 60, 56 86" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round"/>
+              <path d="M48 78 L 56 90 L 66 80" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
       </div>
       <BottomNav active={active} onTab={onTab} />
     </div>
