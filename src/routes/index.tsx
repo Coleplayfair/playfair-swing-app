@@ -340,7 +340,7 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
     return () => clearTimeout(t);
   }, []);
   return (
-    <div className="screen">
+    <div className="screen screen-fixed">
       <div className="notice">
         <span className="notice-icon">ℹ</span>
         <div className="notice-text">
