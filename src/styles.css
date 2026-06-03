@@ -123,9 +123,14 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 .club-dist{font-size:13px;color:#888;display:flex;align-items:center;gap:8px}
 .club-dist b{font-size:16px;font-weight:500;color:#111;margin-right:2px}
 .dist-edit{font-size:11px;color:#094811;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
-.venues-hint{position:absolute;right:14px;bottom:78px;display:flex;flex-direction:column;align-items:flex-end;z-index:30;background:none;border:none;padding:8px;cursor:pointer;font-family:inherit;pointer-events:auto;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.venues-hint *{pointer-events:none}
-.venues-hint-inner{display:flex;flex-direction:column;align-items:flex-end;animation:hint-bob 1.6s ease-in-out infinite}
-.venues-hint-bubble{background:#094811;color:#EDE9DF;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:8px 12px;border-radius:2px;box-shadow:0 4px 12px rgba(0,0,0,.25);white-space:nowrap;margin-bottom:2px}
-.venues-hint-arrow{filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));margin-right:42px}
-@keyframes hint-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* VENUE TIP POPUP */
+.venue-tip-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px}
+.venue-tip-card{background:#fff;border-radius:12px;padding:28px 24px 24px;width:100%;max-width:320px;text-align:center;position:relative;box-shadow:0 12px 40px rgba(0,0,0,0.25);animation:tip-in .25s ease-out}
+.venue-tip-close{position:absolute;top:10px;right:12px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:none;border:none;font-size:18px;color:#888;cursor:pointer;font-family:inherit}
+.venue-tip-close:hover{color:#111}
+.venue-tip-icon{font-size:28px;color:#094811;margin-bottom:10px}
+.venue-tip-title{font-family:'Libre Baskerville',Georgia,serif;font-size:20px;color:#111;margin-bottom:10px}
+.venue-tip-body{font-size:14px;color:#555;line-height:1.6;margin-bottom:20px}
+.venue-tip-body strong{color:#094811}
+.venue-tip-btn{width:100%;padding:14px;background:#094811;color:#EDE9DF;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer;letter-spacing:0.02em}
+@keyframes tip-in{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
