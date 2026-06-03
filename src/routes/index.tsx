@@ -2,6 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { CLUBS, CLUB_SVGS, DEFAULT_SELECTED, type Club } from "@/lib/clubs";
 import { supabase } from "@/integrations/supabase/client";
+import logoBeige from "@/assets/pf-primary-beige.png.asset.json";
+import logoGreen from "@/assets/pf-primary-green.png.asset.json";
+import logoWhite from "@/assets/pf-primary-white.png.asset.json";
+import markGreen from "@/assets/pf-mark-green.png.asset.json";
+import markWhite from "@/assets/pf-mark-white.png.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -155,8 +160,9 @@ function PlayfairApp() {
 function SplashScreen({ onCreate, onLogin }: { onCreate: () => void; onLogin: () => void }) {
   return (
     <div className="screen splash">
-      <div>
-        <div className="splash-logo">playfair</div>
+      <div className="splash-logo-wrap">
+        <img src={markWhite.url} alt="" className="splash-mark" />
+        <img src={logoBeige.url} alt="playfair" className="splash-logo-img" />
         <div className="splash-tag">Golf Club</div>
       </div>
       <button className="btn-solid" onClick={onCreate}>Create account</button>
@@ -184,7 +190,7 @@ function SignupScreen(props: {
       <div className="top-bar">
         <button className="back-btn" onClick={onBack}>← Back</button>
         <span className="top-bar-title">Create account</span>
-        <span style={{ width: 48 }} />
+        <img src={markWhite.url} alt="" className="top-bar-mark" />
       </div>
       <div className="form-body">
         <div className="form-row">
@@ -229,11 +235,12 @@ function LoginScreen({ onBack, onLogin, onSignup }: { onBack: () => void; onLogi
       <div className="top-bar">
         <button className="back-btn" onClick={onBack}>← Back</button>
         <span className="top-bar-title">Log in</span>
-        <span style={{ width: 48 }} />
+        <img src={markWhite.url} alt="" className="top-bar-mark" />
       </div>
       <div className="form-body">
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontFamily: "'Libre Baskerville',Georgia,serif", fontSize: 22, color: "#111", marginBottom: 6 }}>
+        <div style={{ marginBottom: 28, textAlign: "center" }}>
+          <img src={logoGreen.url} alt="playfair" style={{ height: 40, marginBottom: 14 }} />
+          <div style={{ fontFamily: "'Libre Baskerville',Georgia,serif", fontSize: 22, color: "#111", marginBottom: 6, fontStyle: "italic" }}>
             Welcome back.
           </div>
           <div style={{ fontSize: 13, color: "#888", lineHeight: 1.55 }}>
@@ -280,7 +287,7 @@ function SetupScreen(props: {
   return (
     <div className="screen">
       <div className="top-bar">
-        <span style={{ width: 60 }} />
+        <img src={markWhite.url} alt="" className="top-bar-mark" />
         <span className="top-bar-title">Set up your bag</span>
         <span style={{ width: 60, fontSize: 12, color: "rgba(237,233,223,0.45)", textAlign: "right" }}>1 of 1</span>
       </div>
@@ -342,7 +349,7 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
   return (
     <div className="screen screen-fixed">
       <div className="notice">
-        <span className="notice-icon">ℹ</span>
+        <img src={markGreen.url} alt="" className="notice-mark" />
         <div className="notice-text">
           New or no membership yet?{" "}
           <a className="notice-link" href="https://playfairgolfclub.com" target="_blank" rel="noreferrer">
@@ -395,7 +402,7 @@ function BagScreen(props: {
   return (
     <div className="screen">
       <div className="top-bar">
-        <span style={{ width: 48 }} />
+        <img src={markWhite.url} alt="" className="top-bar-mark" />
         <span className="top-bar-title">My Bag</span>
         <button
           style={{ fontSize: 13, color: "rgba(237,233,223,0.7)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
@@ -498,6 +505,7 @@ function ProfileScreen(props: {
   return (
     <div className="screen">
       <div className="profile-top">
+        <img src={logoWhite.url} alt="playfair" className="profile-top-logo" />
         <div className="avatar" onClick={onAvatarClick}>
           {avatar ? <img src={avatar} alt="avatar" /> : <span>{initials}</span>}
           <div className="avatar-edit">Edit</div>

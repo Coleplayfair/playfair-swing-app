@@ -28,8 +28,13 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 
 /* SPLASH */
 .splash{background:#094811;align-items:center;justify-content:center;padding:40px 32px;text-align:center}
-.splash-logo{font-family:'Libre Baskerville',Georgia,serif;font-size:52px;font-style:italic;font-weight:700;color:#EDE9DF;margin-bottom:6px}
-.splash-tag{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(237,233,223,0.4);margin-bottom:72px}
+.splash-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:48px}
+.splash-mark{width:56px;height:auto;margin-bottom:18px;opacity:.95}
+.splash-logo-img{width:78%;max-width:260px;height:auto;display:block}
+.splash-tag{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(237,233,223,0.4);margin-top:10px}
+.top-bar-mark{width:22px;height:22px;object-fit:contain;opacity:.85}
+.notice-mark{width:18px;height:18px;object-fit:contain;flex-shrink:0;margin-top:1px}
+.profile-top-logo{height:22px;width:auto;margin-bottom:18px;opacity:.9}
 .btn-solid{width:100%;padding:16px;background:#EDE9DF;color:#094811;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;border:none;border-radius:2px;cursor:pointer;margin-bottom:12px;letter-spacing:0.02em}
 .btn-outline{background:transparent;color:#EDE9DF;border:1.5px solid rgba(237,233,223,0.35);font-size:14px;font-weight:500;border-radius:2px}
 .btn-green{width:100%;padding:15px;background:#094811;color:#EDE9DF;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;border:none;border-radius:2px;cursor:pointer;letter-spacing:0.02em}
