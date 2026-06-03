@@ -382,7 +382,6 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
           src={url}
           title="yourgolfbooking.com"
           referrerPolicy="no-referrer"
-          onLoad={onFrameLoad}
         />
         {frameError && (
           <div className="webview-fallback">
