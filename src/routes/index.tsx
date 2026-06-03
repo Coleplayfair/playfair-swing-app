@@ -552,20 +552,52 @@ function ProfileScreen(props: {
   );
 }
 
+/* ───── ICONS ───── */
+function GolferIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+      <circle cx="10" cy="5" r="2" />
+      <path d="M14 21l-4-10 3-3" />
+      <path d="M7 16l3-6 6 2" />
+      <path d="M17 12c1.5 1 3 0 3-2s-1.5-3-3-2" />
+    </svg>
+  );
+}
+function GolfBagIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+      <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+      <rect x="6" y="6" width="12" height="14" rx="2" />
+      <path d="M9 6v14" />
+      <path d="M15 6v14" />
+      <path d="M10 10h4" />
+      <path d="M10 14h4" />
+    </svg>
+  );
+}
+function ProfileIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
 /* ───── BOTTOM NAV ───── */
 function BottomNav({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
   return (
     <div className="bottom-nav">
       <button className={"nav-item" + (active === "book" ? " active" : "")} onClick={() => onTab("book")}>
-        <span className="nav-ico">📅</span>
+        <span className="nav-ico"><GolferIcon size={22} /></span>
         <span className="nav-lbl">Book</span>
       </button>
       <button className={"nav-item" + (active === "bag" ? " active" : "")} onClick={() => onTab("bag")}>
-        <span className="nav-ico">⛳</span>
+        <span className="nav-ico"><GolfBagIcon size={22} /></span>
         <span className="nav-lbl">My Bag</span>
       </button>
       <button className={"nav-item" + (active === "profile" ? " active" : "")} onClick={() => onTab("profile")}>
-        <span className="nav-ico">👤</span>
+        <span className="nav-ico"><ProfileIcon size={22} /></span>
         <span className="nav-lbl">Profile</span>
       </button>
     </div>
