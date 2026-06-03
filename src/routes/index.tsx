@@ -337,7 +337,7 @@ function SetupScreen(props: {
 /* ───── BOOK ───── */
 function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
   const [frameError, setFrameError] = useState(false);
-  const [showHint, setShowHint] = useState(false);
+  const [showVenueTip, setShowVenueTip] = useState(false);
   const url = "https://yourgolfbooking.com/account/login";
   useEffect(() => {
     const t = setTimeout(() => {
@@ -350,18 +350,16 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
     }, 4000);
     return () => clearTimeout(t);
   }, []);
-  // Show the "Click here for your venues" hint a few seconds after the user
-  // arrives on Book — enough time to read the login page and sign in. Cross-
-  // origin restrictions mean we can't detect the actual login event from the
-  // YGB iframe, so a delay is the most reliable trigger.
+  // Show the venue tip a few seconds after the user arrives on Book — enough
+  // time to read the login page and sign in. Dismissed state is persisted.
   useEffect(() => {
-    if (localStorage.getItem("pf-venues-hint-dismissed") === "1") return;
-    const t = setTimeout(() => setShowHint(true), 10000);
+    if (localStorage.getItem("pf-venue-tip-dismissed") === "1") return;
+    const t = setTimeout(() => setShowVenueTip(true), 10000);
     return () => clearTimeout(t);
   }, []);
-  const dismissHint = () => {
-    setShowHint(false);
-    localStorage.setItem("pf-venues-hint-dismissed", "1");
+  const dismissVenueTip = () => {
+    setShowVenueTip(false);
+    localStorage.setItem("pf-venue-tip-dismissed", "1");
   };
   return (
     <div className="screen screen-fixed">
@@ -391,18 +389,20 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
             </p>
           </div>
         )}
-        {showHint && (
-          <button type="button" className="venues-hint" onClick={dismissHint} onTouchEnd={(e) => { e.preventDefault(); dismissHint(); }} aria-label="Dismiss hint">
-            <span className="venues-hint-inner">
-              <span className="venues-hint-bubble">Click here for your venues</span>
-              <svg className="venues-hint-arrow" viewBox="0 0 80 100" width="64" height="80">
-                <path d="M14 6 C 50 30, 60 60, 56 86" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round"/>
-                <path d="M48 78 L 56 90 L 66 80" fill="none" stroke="#094811" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </span>
-          </button>
-        )}
       </div>
+      {showVenueTip && (
+        <div className="venue-tip-overlay" onClick={dismissVenueTip}>
+          <div className="venue-tip-card" onClick={(e) => e.stopPropagation()}>
+            <button className="venue-tip-close" onClick={dismissVenueTip} aria-label="Dismiss">✕</button>
+            <div className="venue-tip-icon">☰</div>
+            <div className="venue-tip-title">Find your venues</div>
+            <div className="venue-tip-body">
+              Click the <strong>3 lines</strong> in the top right to visit your venues, or find a venue in the search bar and search <strong>Playfair</strong>.
+            </div>
+            <button className="venue-tip-btn" onClick={dismissVenueTip}>Got it</button>
+          </div>
+        </div>
+      )}
       <BottomNav active={active} onTab={onTab} />
     </div>
   );
