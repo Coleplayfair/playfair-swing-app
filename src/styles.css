@@ -54,8 +54,8 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 .notice-link{color:#094811;font-weight:500;cursor:pointer;text-decoration:underline}
 
 /* WEBVIEW */
-.webview-wrap{flex:1;position:relative;background:#fff;overflow:hidden}
-.webview-frame{width:100%;height:100%;border:0;display:block}
+.webview-wrap{flex:1;position:relative;background:#fff;overflow:hidden;min-height:0}
+.webview-frame{width:100%;height:100%;border:0;display:block;background:#fff}
 .webview-fallback{padding:20px;font-size:13px;color:#555;line-height:1.6}
 .webview-fallback a{color:#094811;font-weight:500}
 
