@@ -123,7 +123,9 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 .club-dist{font-size:13px;color:#888;display:flex;align-items:center;gap:8px}
 .club-dist b{font-size:16px;font-weight:500;color:#111;margin-right:2px}
 .dist-edit{font-size:11px;color:#094811;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
-.venues-hint{position:absolute;right:14px;bottom:78px;display:flex;flex-direction:column;align-items:flex-end;z-index:20;animation:hint-bob 1.6s ease-in-out infinite;background:none;border:none;padding:0;cursor:pointer;font-family:inherit}
+.venues-hint{position:absolute;right:14px;bottom:78px;display:flex;flex-direction:column;align-items:flex-end;z-index:30;background:none;border:none;padding:8px;cursor:pointer;font-family:inherit;pointer-events:auto;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.venues-hint *{pointer-events:none}
+.venues-hint-inner{display:flex;flex-direction:column;align-items:flex-end;animation:hint-bob 1.6s ease-in-out infinite}
 .venues-hint-bubble{background:#094811;color:#EDE9DF;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:8px 12px;border-radius:2px;box-shadow:0 4px 12px rgba(0,0,0,.25);white-space:nowrap;margin-bottom:2px}
 .venues-hint-arrow{filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));margin-right:42px}
 @keyframes hint-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
