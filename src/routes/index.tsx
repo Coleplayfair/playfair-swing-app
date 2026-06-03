@@ -397,7 +397,9 @@ function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onT
             <div className="venue-tip-icon">☰</div>
             <div className="venue-tip-title">Find your venues</div>
             <div className="venue-tip-body">
-              Click the <strong>3 lines</strong> in the top right to visit your venues, or find a venue in the search bar and search <strong>Playfair</strong>.
+              Tap the menu (☰) in the top-right corner to view your venues.
+              <br /><br />
+              Looking for a specific venue? Use the search bar and search for <strong>Playfair</strong>.
             </div>
             <button className="venue-tip-btn" onClick={dismissVenueTip}>Got it</button>
           </div>
