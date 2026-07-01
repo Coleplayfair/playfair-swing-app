@@ -134,3 +134,98 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 .venue-tip-body strong{color:#094811}
 .venue-tip-btn{width:100%;padding:14px;background:#094811;color:#EDE9DF;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer;letter-spacing:0.02em}
 @keyframes tip-in{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+
+/* ─── PLAY / ROUND TRACKING ─── */
+.play-body{flex:1;padding:20px 16px 90px;overflow-y:auto;background:#fff}
+.play-hero{background:#094811;color:#EDE9DF;padding:22px 20px;border-radius:2px;margin-bottom:16px}
+.play-hero-title{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:22px}
+.play-hero-sub{font-size:13px;opacity:.75;margin-top:4px}
+.play-card{border:1px solid #e0ddd6;padding:14px 16px;border-radius:2px;margin-bottom:14px;background:#fbfaf6}
+.play-card-lbl{font-size:10px;color:#094811;letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+.play-card-title{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:16px;color:#111}
+.play-card-sub{font-size:12px;color:#094811;margin-top:6px;font-weight:500}
+.stats-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;padding:14px;background:#EDE9DF;border-radius:2px}
+.stats-strip>div{text-align:center}
+.stat-n{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:22px;color:#094811}
+.stat-l{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#666;margin-top:2px}
+.play-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.play-action{padding:12px;border:1px solid #094811;color:#094811;background:#fff;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;border-radius:2px}
+.section-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#666;font-weight:600;margin:16px 0 10px}
+.round-list{display:flex;flex-direction:column;gap:8px}
+.round-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid #eee;border-radius:2px;background:#fff}
+.round-row-name{font-size:14px;font-weight:500;color:#111}
+.round-row-date{font-size:12px;color:#888;margin-top:2px}
+.round-score{text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.round-score b{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:20px;color:#094811}
+.round-score span{font-size:11px;color:#888}
+.search-row{display:flex;gap:8px;margin-bottom:14px}
+.search-input{flex:1;padding:12px 14px;border:1px solid #e0ddd6;border-radius:2px;font-size:14px;font-family:inherit;outline:none}
+.search-input:focus{border-color:#094811}
+.search-btn{padding:0 18px;background:#094811;color:#EDE9DF;border:none;border-radius:2px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.course-list{display:flex;flex-direction:column}
+.course-row{padding:14px 4px;border-bottom:1px solid #eee;cursor:pointer}
+.course-row-name{font-size:14px;font-weight:500;color:#111}
+.course-row-sub{font-size:12px;color:#888;margin-top:2px}
+.tee-select{width:100%;padding:12px 14px;border:1px solid #e0ddd6;border-radius:2px;font-size:14px;font-family:inherit;background:#fff;margin-top:6px}
+
+/* Active round */
+.hole-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:#0b5313;color:#EDE9DF}
+.hole-nav-btn{background:transparent;border:1px solid rgba(237,233,223,.3);color:#EDE9DF;width:36px;height:36px;border-radius:2px;cursor:pointer;font-size:14px}
+.hole-nav-btn:disabled{opacity:.3}
+.hole-nav-info{text-align:center}
+.round-tabs{display:flex;background:#f7f5ef;border-bottom:1px solid #e0ddd6}
+.round-tab{flex:1;padding:12px;background:none;border:none;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.08em;color:#888;cursor:pointer;border-bottom:2px solid transparent}
+.round-tab.on{color:#094811;border-bottom-color:#094811;background:#fff}
+.round-body{flex:1;overflow-y:auto;background:#fff}
+.gps-view{padding:32px 20px;text-align:center}
+.gps-mid{padding:30px 0}
+.gps-mid-n{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:82px;color:#094811;line-height:1}
+.gps-mid-l{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#888;margin-top:6px}
+.gps-side{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:12px 20px}
+.gps-side-n{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:32px;color:#094811}
+.gps-side-l{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#888;margin-top:2px}
+.gps-note{padding:24px;color:#888;font-size:13px;text-align:center}
+.map-wrap{height:calc(100vh - 280px);min-height:320px;background:#eee}
+.leaflet-container{background:#e8e4dc}
+.me-pin>div{width:16px;height:16px;background:#094811;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 2px #094811}
+.green-pin>div{width:14px;height:14px;background:#EDE9DF;border:2px solid #094811;border-radius:50%}
+.score-view{padding:20px 16px;display:flex;flex-direction:column;gap:16px}
+.stepper{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1px solid #eee;border-radius:2px}
+.stepper-lbl{font-size:13px;font-weight:500;color:#111}
+.stepper-ctrls{display:flex;align-items:center;gap:14px}
+.fw-btns{display:flex;gap:6px}
+.fw-btn{width:38px;height:38px;border:1px solid #094811;background:#fff;color:#094811;font-family:inherit;font-weight:600;cursor:pointer;border-radius:2px}
+.fw-btn.on{background:#094811;color:#EDE9DF}
+.scorecard-strip{display:flex;overflow-x:auto;background:#f7f5ef;border-top:1px solid #e0ddd6}
+.sc-cell{flex:0 0 40px;padding:6px 0;background:none;border:none;border-right:1px solid #eee;cursor:pointer;font-family:inherit}
+.sc-cell.on{background:#094811;color:#EDE9DF}
+.sc-n{font-size:10px;color:#888}
+.sc-cell.on .sc-n{color:rgba(237,233,223,.7)}
+.sc-s{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:16px;color:#094811;margin-top:2px}
+.sc-cell.on .sc-s{color:#EDE9DF}
+
+/* Summary */
+.summary-hero{text-align:center;padding:24px 0}
+.summary-score{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:72px;color:#094811;line-height:1;margin-top:8px}
+.summary-diff{font-size:13px;color:#888;margin-top:6px}
+.summary-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:14px;background:#EDE9DF;border-radius:2px;margin-bottom:16px}
+.summary-stats>div{text-align:center}
+.scg-wrap{display:flex;flex-direction:column;gap:14px;margin-top:12px}
+.scg-block{border:1px solid #eee;border-radius:2px;overflow:hidden}
+.scg-hdr,.scg-row{display:grid;grid-template-columns:44px repeat(9,1fr) 44px;font-size:11px}
+.scg-hdr{background:#f7f5ef;font-weight:600;color:#666}
+.scg-lbl{padding:6px 4px;text-transform:uppercase;letter-spacing:.06em}
+.scg-cell{padding:6px 0;text-align:center;border-left:1px solid #eee}
+.scg-num{font-weight:600}
+.scg-score{font-weight:600}
+.scg-score.birdie{background:#c8e6c9;color:#094811}
+.scg-score.par{color:#111}
+.scg-score.bogey{background:#ffe0b2;color:#8a5a00}
+.scg-score.double{background:#ffcdd2;color:#8a0000}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.stats-cell{padding:16px;border:1px solid #eee;text-align:center;border-radius:2px;background:#fbfaf6}
+
+/* 4-column bottom nav (was 3) */
+.bottom-nav{display:grid !important;grid-template-columns:1fr 1fr 1fr 1fr !important}

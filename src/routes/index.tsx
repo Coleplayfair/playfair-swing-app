@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { CLUBS, CLUB_SVGS, DEFAULT_SELECTED, type Club } from "@/lib/clubs";
 import { supabase } from "@/integrations/supabase/client";
+import { PlayScreen } from "@/lib/play-screen";
 import logoBeige from "@/assets/pf-primary-beige.png.asset.json";
 import logoGreen from "@/assets/pf-primary-green.png.asset.json";
 import logoWhite from "@/assets/pf-primary-white.png.asset.json";
@@ -18,7 +19,8 @@ export const Route = createFileRoute("/")({
   component: PlayfairApp,
 });
 
-type Screen = "splash" | "signup" | "login" | "setup" | "book" | "bag" | "profile";
+type Screen = "splash" | "signup" | "login" | "setup" | "play" | "book" | "bag" | "profile";
+type NavTab = "play" | "book" | "bag" | "profile";
 
 type Profile = {
   firstName: string;
@@ -105,8 +107,12 @@ function PlayfairApp() {
           setHcp={setHcp}
           selected={selected}
           setSelected={setSelected}
-          onContinue={() => go("book")}
+          onContinue={() => go("play")}
         />
+      )}
+
+      {screen === "play" && (
+        <PlayScreen bottomNav={<BottomNav active="play" onTab={go} />} />
       )}
 
       {/* Persistent webview — mounted once after first visit and kept alive
@@ -335,7 +341,7 @@ function SetupScreen(props: {
 }
 
 /* ───── BOOK ───── */
-function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
+function BookScreen({ active, onTab }: { active: NavTab; onTab: (s: Screen) => void }) {
   const [frameError, setFrameError] = useState(false);
   const [showVenueTip, setShowVenueTip] = useState(false);
   const url = "https://yourgolfbooking.com/account/login";
@@ -414,7 +420,7 @@ function BagScreen(props: {
   clubs: Club[];
   setClubs: (c: Club[]) => void;
   onEdit: () => void;
-  active: "book" | "bag" | "profile";
+  active: NavTab;
   onTab: (s: Screen) => void;
 }) {
   const { hcp, selected, clubs, setClubs, onEdit, active, onTab } = props;
@@ -488,7 +494,7 @@ function ProfileScreen(props: {
   onEditHcp: () => void;
   onViewBag: () => void;
   onLogout: () => void;
-  active: "book" | "bag" | "profile";
+  active: NavTab;
   onTab: (s: Screen) => void;
 }) {
   const { profile, setProfile, hcp, initials, avatar, onAvatarClick, onEditHcp, onViewBag, onLogout, active, onTab } = props;
@@ -610,11 +616,24 @@ function ProfileIcon({ size = 22 }: { size?: number }) {
     </svg>
   );
 }
+function FlagIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+      <path d="M5 21V4" />
+      <path d="M5 4h11l-2 3 2 3H5" />
+      <circle cx="19" cy="20" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
 
 /* ───── BOTTOM NAV ───── */
-function BottomNav({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
+function BottomNav({ active, onTab }: { active: NavTab; onTab: (s: Screen) => void }) {
   return (
     <div className="bottom-nav">
+      <button className={"nav-item" + (active === "play" ? " active" : "")} onClick={() => onTab("play")}>
+        <span className="nav-ico"><FlagIcon size={22} /></span>
+        <span className="nav-lbl">Play</span>
+      </button>
       <button className={"nav-item" + (active === "book" ? " active" : "")} onClick={() => onTab("book")}>
         <span className="nav-ico"><GolferIcon size={22} /></span>
         <span className="nav-lbl">Book</span>
