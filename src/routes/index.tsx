@@ -341,7 +341,7 @@ function SetupScreen(props: {
 }
 
 /* ───── BOOK ───── */
-function BookScreen({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
+function BookScreen({ active, onTab }: { active: NavTab; onTab: (s: Screen) => void }) {
   const [frameError, setFrameError] = useState(false);
   const [showVenueTip, setShowVenueTip] = useState(false);
   const url = "https://yourgolfbooking.com/account/login";
@@ -420,7 +420,7 @@ function BagScreen(props: {
   clubs: Club[];
   setClubs: (c: Club[]) => void;
   onEdit: () => void;
-  active: "book" | "bag" | "profile";
+  active: NavTab;
   onTab: (s: Screen) => void;
 }) {
   const { hcp, selected, clubs, setClubs, onEdit, active, onTab } = props;
@@ -494,7 +494,7 @@ function ProfileScreen(props: {
   onEditHcp: () => void;
   onViewBag: () => void;
   onLogout: () => void;
-  active: "book" | "bag" | "profile";
+  active: NavTab;
   onTab: (s: Screen) => void;
 }) {
   const { profile, setProfile, hcp, initials, avatar, onAvatarClick, onEditHcp, onViewBag, onLogout, active, onTab } = props;
