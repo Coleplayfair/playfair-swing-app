@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { CLUBS, CLUB_SVGS, DEFAULT_SELECTED, type Club } from "@/lib/clubs";
 import { supabase } from "@/integrations/supabase/client";
+import { PlayScreen } from "@/lib/play-screen";
 import logoBeige from "@/assets/pf-primary-beige.png.asset.json";
 import logoGreen from "@/assets/pf-primary-green.png.asset.json";
 import logoWhite from "@/assets/pf-primary-white.png.asset.json";
@@ -18,7 +19,8 @@ export const Route = createFileRoute("/")({
   component: PlayfairApp,
 });
 
-type Screen = "splash" | "signup" | "login" | "setup" | "book" | "bag" | "profile";
+type Screen = "splash" | "signup" | "login" | "setup" | "play" | "book" | "bag" | "profile";
+type NavTab = "play" | "book" | "bag" | "profile";
 
 type Profile = {
   firstName: string;
