@@ -147,7 +147,7 @@ function CourseSearch({ onBack, onStarted }: { onBack: () => void; onStarted: (i
     try {
       const full = await getCourse({ data: { courseId: c.id } });
       setCourse(full);
-      setTee(full.tee_boxes?.[0]?.tee_name || "");
+      setTee(((full.tee_boxes as any[]) ?? [])[0]?.tee_name || "");
     } catch (e: any) { alert(e.message); setSelected(null); }
   };
 
