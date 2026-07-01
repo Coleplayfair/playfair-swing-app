@@ -107,8 +107,12 @@ function PlayfairApp() {
           setHcp={setHcp}
           selected={selected}
           setSelected={setSelected}
-          onContinue={() => go("book")}
+          onContinue={() => go("play")}
         />
+      )}
+
+      {screen === "play" && (
+        <PlayScreen bottomNav={<BottomNav active="play" onTab={go} />} />
       )}
 
       {/* Persistent webview — mounted once after first visit and kept alive
