@@ -616,11 +616,24 @@ function ProfileIcon({ size = 22 }: { size?: number }) {
     </svg>
   );
 }
+function FlagIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+      <path d="M5 21V4" />
+      <path d="M5 4h11l-2 3 2 3H5" />
+      <circle cx="19" cy="20" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
 
 /* ───── BOTTOM NAV ───── */
-function BottomNav({ active, onTab }: { active: "book" | "bag" | "profile"; onTab: (s: Screen) => void }) {
+function BottomNav({ active, onTab }: { active: NavTab; onTab: (s: Screen) => void }) {
   return (
     <div className="bottom-nav">
+      <button className={"nav-item" + (active === "play" ? " active" : "")} onClick={() => onTab("play")}>
+        <span className="nav-ico"><FlagIcon size={22} /></span>
+        <span className="nav-lbl">Play</span>
+      </button>
       <button className={"nav-item" + (active === "book" ? " active" : "")} onClick={() => onTab("book")}>
         <span className="nav-ico"><GolferIcon size={22} /></span>
         <span className="nav-lbl">Book</span>
