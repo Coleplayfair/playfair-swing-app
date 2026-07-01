@@ -14,6 +14,223 @@ export type Database = {
   }
   public: {
     Tables: {
+      courses_cache: {
+        Row: {
+          city: string | null
+          club_name: string | null
+          country: string | null
+          fetched_at: string
+          holes: Json
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          raw: Json | null
+          region: string | null
+          tee_boxes: Json
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          club_name?: string | null
+          country?: string | null
+          fetched_at?: string
+          holes?: Json
+          id: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          raw?: Json | null
+          region?: string | null
+          tee_boxes?: Json
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          club_name?: string | null
+          country?: string | null
+          fetched_at?: string
+          holes?: Json
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          raw?: Json | null
+          region?: string | null
+          tee_boxes?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      round_holes: {
+        Row: {
+          drive_distance: number | null
+          fairway_hit: boolean | null
+          gir: boolean | null
+          handicap: number | null
+          hole_number: number
+          id: string
+          notes: string | null
+          par: number
+          penalties: number
+          putts: number | null
+          round_id: string
+          score: number | null
+          updated_at: string
+          yardage: number | null
+        }
+        Insert: {
+          drive_distance?: number | null
+          fairway_hit?: boolean | null
+          gir?: boolean | null
+          handicap?: number | null
+          hole_number: number
+          id?: string
+          notes?: string | null
+          par?: number
+          penalties?: number
+          putts?: number | null
+          round_id: string
+          score?: number | null
+          updated_at?: string
+          yardage?: number | null
+        }
+        Update: {
+          drive_distance?: number | null
+          fairway_hit?: boolean | null
+          gir?: boolean | null
+          handicap?: number | null
+          hole_number?: number
+          id?: string
+          notes?: string | null
+          par?: number
+          penalties?: number
+          putts?: number | null
+          round_id?: string
+          score?: number | null
+          updated_at?: string
+          yardage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_holes_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rounds: {
+        Row: {
+          course_id: string
+          course_name: string
+          created_at: string
+          ended_at: string | null
+          fairways_hit: number
+          fairways_possible: number
+          greens_in_reg: number
+          id: string
+          notes: string | null
+          penalties: number
+          player_id: string
+          started_at: string
+          status: string
+          tee_box: string | null
+          total_par: number
+          total_putts: number
+          total_score: number
+          updated_at: string
+          weather: string | null
+        }
+        Insert: {
+          course_id: string
+          course_name: string
+          created_at?: string
+          ended_at?: string | null
+          fairways_hit?: number
+          fairways_possible?: number
+          greens_in_reg?: number
+          id?: string
+          notes?: string | null
+          penalties?: number
+          player_id: string
+          started_at?: string
+          status?: string
+          tee_box?: string | null
+          total_par?: number
+          total_putts?: number
+          total_score?: number
+          updated_at?: string
+          weather?: string | null
+        }
+        Update: {
+          course_id?: string
+          course_name?: string
+          created_at?: string
+          ended_at?: string | null
+          fairways_hit?: number
+          fairways_possible?: number
+          greens_in_reg?: number
+          id?: string
+          notes?: string | null
+          penalties?: number
+          player_id?: string
+          started_at?: string
+          status?: string
+          tee_box?: string | null
+          total_par?: number
+          total_putts?: number
+          total_score?: number
+          updated_at?: string
+          weather?: string | null
+        }
+        Relationships: []
+      }
+      shots: {
+        Row: {
+          club: string | null
+          created_at: string
+          distance_yards: number | null
+          hole_number: number
+          id: string
+          latitude: number | null
+          longitude: number | null
+          round_id: string
+          shot_number: number
+        }
+        Insert: {
+          club?: string | null
+          created_at?: string
+          distance_yards?: number | null
+          hole_number: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          round_id: string
+          shot_number: number
+        }
+        Update: {
+          club?: string | null
+          created_at?: string
+          distance_yards?: number | null
+          hole_number?: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          round_id?: string
+          shot_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shots_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signups: {
         Row: {
           created_at: string
