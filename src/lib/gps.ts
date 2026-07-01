@@ -11,10 +11,9 @@ export function distanceYards(a: { lat: number; lng: number }, b: { lat: number;
 
 export function getPlayerId(): string {
   if (typeof window === "undefined") return "server";
-  let id = localStorage.getItem("pf-player-id");
-  if (!id) {
-    id = (crypto as any).randomUUID?.() || Math.random().toString(36).slice(2) + Date.now();
-    localStorage.setItem("pf-player-id", id);
-  }
+  const existing = localStorage.getItem("pf-player-id");
+  if (existing) return existing;
+  const id = (crypto as any).randomUUID?.() || Math.random().toString(36).slice(2) + Date.now();
+  localStorage.setItem("pf-player-id", id);
   return id;
 }

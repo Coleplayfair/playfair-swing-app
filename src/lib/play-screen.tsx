@@ -201,7 +201,7 @@ function CourseSearch({ onBack, onStarted }: { onBack: () => void; onStarted: (i
               <>
                 <label style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em" }}>Tee box</label>
                 <select className="tee-select" value={tee} onChange={(e) => setTee(e.target.value)}>
-                  {course.tee_boxes.map((t: any) => (
+                  {(course.tee_boxes as any[]).map((t: any) => (
                     <option key={t.tee_name} value={t.tee_name}>
                       {t.tee_name}{t.par_total ? ` · Par ${t.par_total}` : ""}{t.total_yards ? ` · ${t.total_yards}y` : ""}
                     </option>
