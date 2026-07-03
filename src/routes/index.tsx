@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import { CLUBS, CLUB_SVGS, DEFAULT_SELECTED, type Club } from "@/lib/clubs";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { PlayScreen } from "@/lib/play-screen";
 import logoBeige from "@/assets/pf-primary-beige.png.asset.json";
 import logoGreen from "@/assets/pf-primary-green.png.asset.json";
@@ -19,7 +21,17 @@ export const Route = createFileRoute("/")({
   component: PlayfairApp,
 });
 
-type Screen = "splash" | "signup" | "login" | "setup" | "play" | "book" | "bag" | "profile";
+type Screen =
+  | "loading"
+  | "splash"
+  | "signup"
+  | "login"
+  | "check-email"
+  | "setup"
+  | "play"
+  | "book"
+  | "bag"
+  | "profile";
 type NavTab = "play" | "book" | "bag" | "profile";
 
 type Profile = {
@@ -30,19 +42,33 @@ type Profile = {
   suburb: string;
 };
 
-const DEFAULT_PROFILE: Profile = {
-  firstName: "Cole",
-  lastName: "Rudlin",
-  email: "cole@playfairgolfclub.com",
-  mobile: "+61 400 000 000",
-  suburb: "Randwick",
+const EMPTY_PROFILE: Profile = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  mobile: "",
+  suburb: "",
 };
 
+const signupSchema = z.object({
+  fn: z.string().trim().min(1, "First name is required").max(100),
+  ln: z.string().trim().min(1, "Last name is required").max(100),
+  em: z.string().trim().email("Enter a valid email").max(255),
+  mb: z.string().trim().min(6, "Enter a valid mobile number").max(50),
+  sb: z.string().trim().min(1, "Suburb is required").max(120),
+  pw: z.string().min(8, "Password must be at least 8 characters").max(128),
+});
+
+const loginSchema = z.object({
+  em: z.string().trim().email("Enter a valid email"),
+  pw: z.string().min(1, "Enter your password"),
+});
+
 function PlayfairApp() {
-  const [screen, setScreen] = useState<Screen>("splash");
-  const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
-  const [signupForm, setSignupForm] = useState({ fn: "", ln: "", em: "", mb: "", sb: "" });
-  const [submitting, setSubmitting] = useState(false);
+  const [screen, setScreen] = useState<Screen>("loading");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
+  const [pendingEmail, setPendingEmail] = useState<string>("");
   const [hcp, setHcp] = useState(18);
   const [selected, setSelected] = useState<Set<number>>(new Set(DEFAULT_SELECTED));
   const [clubs, setClubs] = useState<Club[]>(CLUBS.map((c) => ({ ...c })));
@@ -51,60 +77,127 @@ function PlayfairApp() {
 
   const go = (s: Screen) => setScreen(s);
 
-  const doSignup = async () => {
-    const fn = signupForm.fn.trim() || "Cole";
-    const ln = signupForm.ln.trim() || "Rudlin";
-    const em = signupForm.em.trim() || "cole@playfairgolfclub.com";
-    const mb = signupForm.mb.trim() || "+61 400 000 000";
-    const sb = signupForm.sb.trim() || "Randwick";
-    setSubmitting(true);
-    try {
-      await supabase.from("signups").insert({
-        first_name: fn,
-        last_name: ln,
-        email: em,
-        mobile: mb,
-        suburb: sb,
-      });
-    } catch (e) {
-      console.error("signup save failed", e);
-    } finally {
-      setSubmitting(false);
-    }
-    setProfile({ firstName: fn, lastName: ln, email: em, mobile: mb, suburb: sb });
-    go("setup");
+  // Auth session gating
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProfile = async (uid: string) => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("first_name,last_name,email,mobile,suburb,handicap")
+        .eq("id", uid)
+        .maybeSingle();
+      if (!mounted) return;
+      if (data) {
+        setProfile({
+          firstName: data.first_name ?? "",
+          lastName: data.last_name ?? "",
+          email: data.email ?? "",
+          mobile: data.mobile ?? "",
+          suburb: data.suburb ?? "",
+        });
+        if (typeof data.handicap === "number") setHcp(Math.round(data.handicap));
+      }
+    };
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      const session = data.session;
+      if (session) {
+        setUserId(session.user.id);
+        loadProfile(session.user.id);
+        setScreen("play");
+      } else {
+        setScreen("splash");
+      }
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (event === "SIGNED_IN" && session) {
+        setUserId(session.user.id);
+        loadProfile(session.user.id);
+        setScreen("play");
+      } else if (event === "SIGNED_OUT") {
+        setUserId(null);
+        setProfile(EMPTY_PROFILE);
+        setScreen("splash");
+      }
+    });
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const persistProfile = async (next: Profile) => {
+    setProfile(next);
+    if (!userId) return;
+    await supabase
+      .from("profiles")
+      .update({
+        first_name: next.firstName,
+        last_name: next.lastName,
+        mobile: next.mobile,
+        suburb: next.suburb,
+      })
+      .eq("id", userId);
+  };
+
+  const persistHandicap = async (n: number) => {
+    setHcp(n);
+    if (!userId) return;
+    await supabase.from("profiles").update({ handicap: n }).eq("id", userId);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setScreen("splash");
   };
 
   const initials =
     (profile.firstName[0] || "").toUpperCase() + (profile.lastName[0] || "").toUpperCase();
 
+  if (screen === "loading") {
+    return (
+      <div className="app">
+        <div className="screen splash" style={{ justifyContent: "center" }}>
+          <img src={markWhite.url} alt="" style={{ width: 56, opacity: 0.7 }} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
-      {screen === "splash" && <SplashScreen onCreate={() => go("signup")} onLogin={() => go("login")} />}
+      {screen === "splash" && (
+        <SplashScreen onCreate={() => go("signup")} onLogin={() => go("login")} />
+      )}
 
       {screen === "signup" && (
         <SignupScreen
-          form={signupForm}
-          onChange={setSignupForm}
           onBack={() => go("splash")}
           onLogin={() => go("login")}
-          onContinue={doSignup}
-          submitting={submitting}
+          onSignedUp={(email) => {
+            setPendingEmail(email);
+            go("check-email");
+          }}
         />
       )}
 
+      {screen === "check-email" && (
+        <CheckEmailScreen email={pendingEmail} onBack={() => go("login")} />
+      )}
+
       {screen === "login" && (
-        <LoginScreen
-          onBack={() => go("splash")}
-          onLogin={() => go("setup")}
-          onSignup={() => go("signup")}
-        />
+        <LoginScreen onBack={() => go("splash")} onSignup={() => go("signup")} />
       )}
 
       {screen === "setup" && (
         <SetupScreen
           hcp={hcp}
-          setHcp={setHcp}
+          setHcp={persistHandicap}
           selected={selected}
           setSelected={setSelected}
           onContinue={() => go("play")}
@@ -115,8 +208,6 @@ function PlayfairApp() {
         <PlayScreen bottomNav={<BottomNav active="play" onTab={go} />} />
       )}
 
-      {/* Persistent webview — mounted once after first visit and kept alive
-          so the YGB session is not lost when switching tabs. */}
       {(screen === "book" || screen === "bag" || screen === "profile") && (
         <div style={{ display: screen === "book" ? "block" : "none", height: "100%" }}>
           <BookScreen active="book" onTab={go} />
@@ -138,14 +229,14 @@ function PlayfairApp() {
       {screen === "profile" && (
         <ProfileScreen
           profile={profile}
-          setProfile={setProfile}
+          setProfile={persistProfile}
           hcp={hcp}
           initials={initials}
           avatar={avatar}
           onAvatarClick={() => fileRef.current?.click()}
           onEditHcp={() => go("setup")}
           onViewBag={() => go("bag")}
-          onLogout={() => go("splash")}
+          onLogout={handleLogout}
           active="profile"
           onTab={go}
         />
@@ -170,6 +261,26 @@ function PlayfairApp() {
 
 /* ───── SPLASH ───── */
 function SplashScreen({ onCreate, onLogin }: { onCreate: () => void; onLogin: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const google = async () => {
+    setErr(null);
+    setBusy(true);
+    try {
+      const res = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (res.error) {
+        setErr("Google sign-in failed. Try again.");
+        setBusy(false);
+        return;
+      }
+      // redirected or session set — auth listener handles the rest
+    } catch {
+      setErr("Google sign-in failed. Try again.");
+      setBusy(false);
+    }
+  };
   return (
     <div className="screen splash">
       <div className="splash-logo-wrap">
@@ -179,6 +290,10 @@ function SplashScreen({ onCreate, onLogin }: { onCreate: () => void; onLogin: ()
       </div>
       <button className="btn-solid" onClick={onCreate}>Create account</button>
       <button className="btn-solid btn-outline" onClick={onLogin}>Log in</button>
+      <button className="btn-solid btn-outline" onClick={google} disabled={busy} style={{ marginTop: 8 }}>
+        {busy ? "Opening Google…" : "Continue with Google"}
+      </button>
+      {err && <div style={{ color: "#ff6b6b", fontSize: 12, marginTop: 10 }}>{err}</div>}
       <div style={{ fontSize: 12, color: "rgba(237,233,223,0.3)", marginTop: 24, textAlign: "center", lineHeight: 1.65 }}>
         By continuing you agree to the<br />playfair Terms of Use and Privacy Policy
       </div>
@@ -188,15 +303,64 @@ function SplashScreen({ onCreate, onLogin }: { onCreate: () => void; onLogin: ()
 
 /* ───── SIGNUP ───── */
 function SignupScreen(props: {
-  form: { fn: string; ln: string; em: string; mb: string; sb: string };
-  onChange: (f: any) => void;
   onBack: () => void;
   onLogin: () => void;
-  onContinue: () => void;
-  submitting: boolean;
+  onSignedUp: (email: string) => void;
 }) {
-  const { form, onChange, onBack, onLogin, onContinue, submitting } = props;
-  const upd = (k: string, v: string) => onChange({ ...form, [k]: v });
+  const { onBack, onLogin, onSignedUp } = props;
+  const [form, setForm] = useState({ fn: "", ln: "", em: "", mb: "", sb: "", pw: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [formErr, setFormErr] = useState<string | null>(null);
+  const upd = (k: string, v: string) => setForm({ ...form, [k]: v });
+
+  const submit = async () => {
+    setFormErr(null);
+    const parsed = signupSchema.safeParse(form);
+    if (!parsed.success) {
+      const es: Record<string, string> = {};
+      for (const iss of parsed.error.issues) {
+        const key = iss.path[0] as string;
+        if (!es[key]) es[key] = iss.message;
+      }
+      setErrors(es);
+      return;
+    }
+    setErrors({});
+    setSubmitting(true);
+    const { fn, ln, em, mb, sb, pw } = parsed.data;
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: em,
+        password: pw,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { first_name: fn, last_name: ln, mobile: mb, suburb: sb },
+        },
+      });
+      if (error) {
+        setFormErr(error.message);
+        setSubmitting(false);
+        return;
+      }
+      // Also write lead row (best-effort; safe if it fails)
+      supabase
+        .from("signups")
+        .insert({ first_name: fn, last_name: ln, email: em, mobile: mb, suburb: sb })
+        .then(() => {}, () => {});
+      // Email confirmation is required — no session yet
+      if (!data.session) {
+        onSignedUp(em);
+      }
+      setSubmitting(false);
+    } catch (e: any) {
+      setFormErr(e?.message ?? "Sign up failed");
+      setSubmitting(false);
+    }
+  };
+
+  const errStyle = { color: "#c0392b", fontSize: 12, marginTop: 4 };
+
   return (
     <div className="screen">
       <div className="top-bar">
@@ -209,28 +373,39 @@ function SignupScreen(props: {
           <div className="form-group">
             <label>First name</label>
             <input type="text" placeholder="First name" value={form.fn} onChange={(e) => upd("fn", e.target.value)} />
+            {errors.fn && <div style={errStyle}>{errors.fn}</div>}
           </div>
           <div className="form-group">
             <label>Last name</label>
             <input type="text" placeholder="Last name" value={form.ln} onChange={(e) => upd("ln", e.target.value)} />
+            {errors.ln && <div style={errStyle}>{errors.ln}</div>}
           </div>
         </div>
         <div className="form-group">
           <label>Email address</label>
           <input type="email" placeholder="you@email.com" value={form.em} onChange={(e) => upd("em", e.target.value)} />
+          {errors.em && <div style={errStyle}>{errors.em}</div>}
+        </div>
+        <div className="form-group">
+          <label>Password</label>
+          <input type="password" placeholder="At least 8 characters" value={form.pw} onChange={(e) => upd("pw", e.target.value)} />
+          {errors.pw && <div style={errStyle}>{errors.pw}</div>}
         </div>
         <div className="form-group">
           <label>Mobile number</label>
           <input type="tel" placeholder="+61 4xx xxx xxx" value={form.mb} onChange={(e) => upd("mb", e.target.value)} />
+          {errors.mb && <div style={errStyle}>{errors.mb}</div>}
         </div>
         <div className="form-group">
           <label>Suburb</label>
           <input type="text" placeholder="Your suburb" value={form.sb} onChange={(e) => upd("sb", e.target.value)} />
+          {errors.sb && <div style={errStyle}>{errors.sb}</div>}
         </div>
+        {formErr && <div style={{ ...errStyle, marginTop: 8 }}>{formErr}</div>}
       </div>
       <div className="form-action">
-        <button className="btn-green" onClick={onContinue} disabled={submitting}>
-          {submitting ? "Saving…" : "Continue →"}
+        <button className="btn-green" onClick={submit} disabled={submitting}>
+          {submitting ? "Creating account…" : "Continue →"}
         </button>
         <div className="form-link">
           Already have an account? <span onClick={onLogin}>Log in</span>
@@ -240,8 +415,98 @@ function SignupScreen(props: {
   );
 }
 
+/* ───── CHECK EMAIL ───── */
+function CheckEmailScreen({ email, onBack }: { email: string; onBack: () => void }) {
+  return (
+    <div className="screen">
+      <div className="top-bar">
+        <button className="back-btn" onClick={onBack}>← Back</button>
+        <span className="top-bar-title">Verify your email</span>
+        <img src={markWhite.url} alt="" className="top-bar-mark" />
+      </div>
+      <div className="form-body" style={{ textAlign: "center", paddingTop: 40 }}>
+        <img src={logoGreen.url} alt="playfair" style={{ height: 40, marginBottom: 20 }} />
+        <div style={{ fontFamily: "'Libre Baskerville',Georgia,serif", fontSize: 22, color: "#111", marginBottom: 12, fontStyle: "italic" }}>
+          Check your inbox.
+        </div>
+        <div style={{ fontSize: 14, color: "#666", lineHeight: 1.6, maxWidth: 320, margin: "0 auto" }}>
+          We've sent a confirmation link to<br />
+          <strong style={{ color: "#111" }}>{email}</strong><br /><br />
+          Click the link in that email to activate your account, then come back here to log in.
+        </div>
+      </div>
+      <div className="form-action">
+        <button className="btn-green" onClick={onBack}>Back to log in</button>
+      </div>
+    </div>
+  );
+}
+
 /* ───── LOGIN ───── */
-function LoginScreen({ onBack, onLogin, onSignup }: { onBack: () => void; onLogin: () => void; onSignup: () => void }) {
+function LoginScreen({ onBack, onSignup }: { onBack: () => void; onSignup: () => void }) {
+  const [form, setForm] = useState({ em: "", pw: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formErr, setFormErr] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const upd = (k: string, v: string) => setForm({ ...form, [k]: v });
+
+  const submit = async () => {
+    setFormErr(null);
+    const parsed = loginSchema.safeParse(form);
+    if (!parsed.success) {
+      const es: Record<string, string> = {};
+      for (const iss of parsed.error.issues) {
+        const key = iss.path[0] as string;
+        if (!es[key]) es[key] = iss.message;
+      }
+      setErrors(es);
+      return;
+    }
+    setErrors({});
+    setSubmitting(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.em,
+      password: parsed.data.pw,
+    });
+    if (error) {
+      setFormErr(error.message);
+      setSubmitting(false);
+      return;
+    }
+    // auth listener will navigate
+  };
+
+  const google = async () => {
+    setFormErr(null);
+    setSubmitting(true);
+    const res = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (res.error) {
+      setFormErr("Google sign-in failed.");
+      setSubmitting(false);
+    }
+  };
+
+  const forgot = async () => {
+    setFormErr(null);
+    if (!form.em) {
+      setErrors({ em: "Enter your email first" });
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(form.em.trim(), {
+      redirectTo: window.location.origin,
+    });
+    if (error) {
+      setFormErr(error.message);
+    } else {
+      setFormErr("Password reset email sent. Check your inbox.");
+    }
+  };
+
+  const errStyle = { color: "#c0392b", fontSize: 12, marginTop: 4 };
+
   return (
     <div className="screen">
       <div className="top-bar">
@@ -261,18 +526,26 @@ function LoginScreen({ onBack, onLogin, onSignup }: { onBack: () => void; onLogi
         </div>
         <div className="form-group">
           <label>Email address</label>
-          <input type="email" placeholder="your@email.com" />
+          <input type="email" placeholder="your@email.com" value={form.em} onChange={(e) => upd("em", e.target.value)} />
+          {errors.em && <div style={errStyle}>{errors.em}</div>}
         </div>
         <div className="form-group">
           <label>Password</label>
-          <input type="password" placeholder="••••••••" />
+          <input type="password" placeholder="••••••••" value={form.pw} onChange={(e) => upd("pw", e.target.value)} />
+          {errors.pw && <div style={errStyle}>{errors.pw}</div>}
         </div>
         <div style={{ textAlign: "right", margin: "-4px 0 20px" }}>
-          <span style={{ fontSize: 13, color: "#094811", cursor: "pointer", fontWeight: 500 }}>Forgot password?</span>
+          <span onClick={forgot} style={{ fontSize: 13, color: "#094811", cursor: "pointer", fontWeight: 500 }}>Forgot password?</span>
         </div>
+        {formErr && <div style={{ ...errStyle, marginBottom: 8 }}>{formErr}</div>}
       </div>
       <div className="form-action">
-        <button className="btn-green" onClick={onLogin}>Log in</button>
+        <button className="btn-green" onClick={submit} disabled={submitting}>
+          {submitting ? "Logging in…" : "Log in"}
+        </button>
+        <button className="btn-solid btn-outline" onClick={google} disabled={submitting} style={{ marginTop: 10, background: "transparent", color: "#094811", borderColor: "#094811" }}>
+          Continue with Google
+        </button>
         <div className="form-link">
           New to playfair? <span onClick={onSignup}>Create an account</span>
         </div>
@@ -356,14 +629,11 @@ function BookScreen({ active, onTab }: { active: NavTab; onTab: (s: Screen) => v
     }, 4000);
     return () => clearTimeout(t);
   }, []);
-  // Show the venue tip a few seconds after the user arrives on Book.
   useEffect(() => {
     const t = setTimeout(() => setShowVenueTip(true), 10000);
     return () => clearTimeout(t);
   }, []);
-  const dismissVenueTip = () => {
-    setShowVenueTip(false);
-  };
+  const dismissVenueTip = () => setShowVenueTip(false);
   return (
     <div className="screen screen-fixed">
       <div className="notice">
@@ -502,6 +772,7 @@ function ProfileScreen(props: {
   const [draft, setDraft] = useState("");
 
   const startEdit = (k: keyof Profile) => {
+    if (k === "email") return; // email is auth-managed
     setEditing(k);
     setDraft(profile[k]);
   };
@@ -551,7 +822,7 @@ function ProfileScreen(props: {
         <div className="pf-section">
           {row("First name", "firstName")}
           {row("Last name", "lastName")}
-          {row("Email", "email", true, true)}
+          {row("Email", "email", false, true)}
           {row("Mobile", "mobile")}
           {row("Suburb", "suburb")}
         </div>
