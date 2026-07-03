@@ -62,6 +62,45 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          first_name: string
+          handicap: number
+          id: string
+          last_name: string
+          mobile: string
+          suburb: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          handicap?: number
+          id: string
+          last_name?: string
+          mobile?: string
+          suburb?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          handicap?: number
+          id?: string
+          last_name?: string
+          mobile?: string
+          suburb?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       round_holes: {
         Row: {
           drive_distance: number | null
