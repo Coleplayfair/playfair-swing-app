@@ -39,8 +39,10 @@ export const Route = createFileRoute("/api/public/course-photo/$id")({
         const alreadyChecked = !!c.data?.photo_checked_at;
 
         if (!photoName && !alreadyChecked) {
+          // Prefer club_name for the Places text query — courseName is often
+          // a generic "18-hole course" and returns nothing useful.
           const label = c.data
-            ? [c.data.name, c.data.club_name].filter(Boolean).join(" ")
+            ? (c.data.club_name || c.data.name || "")
             : qName || "";
           const lat = c.data?.latitude ?? (qLat ? Number(qLat) : null);
           const lng = c.data?.longitude ?? (qLng ? Number(qLng) : null);
