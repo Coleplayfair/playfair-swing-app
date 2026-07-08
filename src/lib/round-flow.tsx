@@ -57,7 +57,7 @@ export function RoundSettings({ course, onBack, onCreated }: {
     <>
       <div className="rs-topbar">
         <button className="rs-x" onClick={onBack} aria-label="Close">✕</button>
-        <div className="rs-title">Round Settings</div>
+        <div className="rs-title">Round Setup</div>
         <button className="rs-info" aria-label="Info">i</button>
       </div>
       <div className="rs-body">
@@ -81,7 +81,7 @@ export function RoundSettings({ course, onBack, onCreated }: {
           </button>
         </div>
 
-        <div className="rs-section-label">FORMAT</div>
+        <div className="rs-section-label">Format</div>
         <div className="rs-card">
           <button className="rs-row" onClick={() => setMode(mode === "general_play" ? "tournament" : "general_play")}>
             <span className="rs-row-lbl">Mode</span>
@@ -103,28 +103,29 @@ export function RoundSettings({ course, onBack, onCreated }: {
           </div>
         </div>
 
-        <div className="rs-section-label">OPTIONS</div>
+        <div className="rs-section-label">Options</div>
         <div className="rs-card">
           <Toggle
-            title="Handicap Round"
-            sub="Used for handicap calculation"
+            title="Count for Handicap"
+            sub="Include this round in your handicap index"
             value={handicapRound}
             onChange={setHandicapRound}
-            icon="🎯"
+            icon="◎"
           />
           <div className="rs-divider" />
           <Toggle
-            title="Go Live"
-            sub="Allow your friends to follow your round as you play it"
+            title="Share Live"
+            sub="Let your buddies follow along in real time"
             value={goLive}
             onChange={setGoLive}
-            icon="📡"
+            icon="◉"
           />
           <div className="rs-divider" />
           <Toggle
             title="GPS Only"
-            sub="Skip scoring and focus on GPS distances during your round"
+            sub="Skip scoring — just yardages"
             value={gpsOnly}
+            icon="◈"
             onChange={setGpsOnly}
           />
         </div>
@@ -149,7 +150,7 @@ export function RoundSettings({ course, onBack, onCreated }: {
       </div>
       <div className="rs-footer">
         <button className="rs-cta" onClick={create} disabled={busy || !full}>
-          {busy ? "Creating…" : "Create Round"}
+          {busy ? "Preparing…" : "Tee it up"}
         </button>
       </div>
     </>
@@ -210,14 +211,14 @@ export function RoundDetails({ roundId, onClose, onStart }: {
     <>
       <div className="rs-topbar rs-topbar-dark">
         <button className="rs-x" onClick={onClose}>✕</button>
-        <div className="rs-title">Round Details</div>
+        <div className="rs-title">Your Round</div>
         <button className="rs-info">⋯</button>
       </div>
 
       <div className="rs-body">
         <div className="rd-course-card">
           <div className="rd-course-head">
-            <span className="rd-chip">STARTING SOON <span className="rd-chip-dot">•</span></span>
+            <span className="rd-chip">ON THE TEE <span className="rd-chip-dot">•</span></span>
             <span className="rd-time">Today · {new Date(round.starts_at || round.started_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
           </div>
           <div className="rd-course-row">
@@ -239,14 +240,14 @@ export function RoundDetails({ roundId, onClose, onStart }: {
         </div>
 
         <div className="rd-side-game">
-          <span className="rd-side-icon">⛳</span>
-          <span className="rd-side-lbl">Side Game</span>
+          <span className="rd-side-icon">◆</span>
+          <span className="rd-side-lbl">Wager / Side Bet</span>
           <span className="rd-side-add">Add ›</span>
         </div>
 
         <div className="rd-groups-hdr">
-          <span>Groups</span>
-          <span className="rd-draw">⇄ Draw</span>
+          <span>Playing Group</span>
+          <span className="rd-draw">⇄ Draw order</span>
         </div>
 
         <div className="rd-group-card">
@@ -262,19 +263,19 @@ export function RoundDetails({ roundId, onClose, onStart }: {
             {Array.from({ length: Math.max(0, 4 - players.length) }).map((_, i) => (
               <button key={`add-${i}`} className="rd-add-player" onClick={() => setShowAdd(true)}>
                 <div className="rd-add-plus">+</div>
-                <div className="rd-add-lbl">Add Player</div>
+                <div className="rd-add-lbl">Invite</div>
               </button>
             ))}
           </div>
         </div>
 
         <button className="rd-add-group">
-          <span className="rd-add-group-plus">+</span> Add Group
+          <span className="rd-add-group-plus">+</span> Split into another group
         </button>
       </div>
 
       <div className="rs-footer">
-        <button className="rs-cta" onClick={onStart}>Start Round</button>
+        <button className="rs-cta" onClick={onStart}>Play the first hole</button>
       </div>
 
       {showAdd && (
@@ -385,25 +386,25 @@ function AddPlayerSheet({ roundId, onClose, onAdded, shareLink }: {
     <div className="rs-sheet">
       <div className="rs-sheet-hdr">
         <button className="rs-sheet-btn" onClick={onClose}>Cancel</button>
-        <div className="rs-sheet-title">Add Player</div>
+        <div className="rs-sheet-title">Invite Players</div>
         <button className="rs-sheet-btn rs-sheet-btn-primary" onClick={onClose}>Done</button>
       </div>
       <div className="rs-body">
         <div className="ap-search">
-          <input placeholder="Search by Name" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input placeholder="Find a Playfair member" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="ap-share">
-          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>▦ Share QR code</button>
-          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>🔗 Share link</button>
+          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>▦ QR code</button>
+          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>↗ Copy link</button>
         </div>
         <div className="ap-tabs">
-          <button className={"ap-tab" + (tab === "buddies" ? " on" : "")} onClick={() => setTab("buddies")}>BUDDIES</button>
-          <button className={"ap-tab" + (tab === "guests" ? " on" : "")} onClick={() => setTab("guests")}>GUESTS</button>
+          <button className={"ap-tab" + (tab === "buddies" ? " on" : "")} onClick={() => setTab("buddies")}>MY GROUP</button>
+          <button className={"ap-tab" + (tab === "guests" ? " on" : "")} onClick={() => setTab("guests")}>WALK-ON</button>
         </div>
 
         {tab === "buddies" && (
           <>
-            <div className="ap-section">{searchResults ? "SEARCH" : "ALL"}</div>
+            <div className="ap-section">{searchResults ? "MATCHES" : "PLAYFAIR MEMBERS"}</div>
             <div className="ap-list">
               {list.length === 0 && <div className="pf-note">{searchResults ? "No matches" : "No buddies yet. Search for someone to add them."}</div>}
               {list.map((p: any) => (
@@ -424,11 +425,11 @@ function AddPlayerSheet({ roundId, onClose, onAdded, shareLink }: {
 
         {tab === "guests" && (
           <div className="ap-guest-form">
-            <label>Guest name</label>
+            <label>Their name</label>
             <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="e.g. Jane D." />
             <label>Handicap (optional)</label>
             <input value={guestHcp} onChange={(e) => setGuestHcp(e.target.value)} placeholder="e.g. 18" inputMode="decimal" />
-            <button className="rs-cta" onClick={addGuest} disabled={busy || !guestName.trim()}>Add guest</button>
+            <button className="rs-cta" onClick={addGuest} disabled={busy || !guestName.trim()}>Add to group</button>
           </div>
         )}
       </div>
@@ -481,15 +482,15 @@ export function HoleInput({ hole, onSave }: { hole: any; onSave: (patch: any) =>
 
   return (
     <div className="hi-body">
-      <div className="hi-header">Input</div>
-      <StepperRow label="Total Strokes" value={strokes} onChange={(v: number) => set("score", v, setStrokes)} />
-      <div className="hi-hint">How many were:</div>
-      <StepperRow label="Putts" value={putts} onChange={(v: number) => set("putts", v, setPutts)} />
-      <StepperRow label="Sand Shots" value={sand} onChange={(v: number) => set("sand_shots", v, setSand)} />
-      <StepperRow label="Penalties" value={pen} onChange={(v: number) => set("penalties", v, setPen)} />
+      <div className="hi-header">Card the hole</div>
+      <StepperRow label="Strokes on hole" value={strokes} onChange={(v: number) => set("score", v, setStrokes)} />
+      <div className="hi-hint">Break it down —</div>
+      <StepperRow label="Putts on green" value={putts} onChange={(v: number) => set("putts", v, setPutts)} />
+      <StepperRow label="Bunker shots" value={sand} onChange={(v: number) => set("sand_shots", v, setSand)} />
+      <StepperRow label="Penalty strokes" value={pen} onChange={(v: number) => set("penalties", v, setPen)} />
       {hole.par >= 4 && (
         <div className="hi-row">
-          <div className="hi-row-lbl">Fairways</div>
+          <div className="hi-row-lbl">Off the tee</div>
           <div className="hi-fw-btns">
             <FwBtn dir="left" sym="↖" />
             <FwBtn dir="straight" sym="●" />
@@ -499,8 +500,8 @@ export function HoleInput({ hole, onSave }: { hole: any; onSave: (patch: any) =>
         </div>
       )}
       <div className="hi-pills">
-        <Pill label="GIR" value={gir} onToggle={() => set("gir", !gir, setGir)} />
-        <Pill label="Sand Saves" value={sandSave} onToggle={() => set("sand_save", !sandSave, setSandSave)} />
+        <Pill label="Green in Reg" value={gir} onToggle={() => set("gir", !gir, setGir)} />
+        <Pill label="Sand Save" value={sandSave} onToggle={() => set("sand_save", !sandSave, setSandSave)} />
         <Pill label="Up & Down" value={upDown} onToggle={() => set("up_down", !upDown, setUpDown)} />
       </div>
     </div>

@@ -401,7 +401,7 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
         {tab === "gps" && (
           <div className="gps-view">
             {!gps && <div className="gps-note">Waiting for GPS…</div>}
-            {gps && !green && <div className="gps-note">No green coordinates in course data for this hole.</div>}
+            {gps && !green && <div className="gps-note">GPS distances haven't been mapped for this hole yet.</div>}
             {green && (
               <>
                 <div className="gps-mid">
