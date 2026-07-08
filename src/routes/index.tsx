@@ -213,9 +213,9 @@ function PlayfairApp() {
         <PerformanceScreen bottomNav={<BottomNav active="performance" onTab={go} />} />
       )}
 
-      {(screen === "book" || screen === "bag" || screen === "profile") && (
-        <div style={{ display: screen === "book" ? "block" : "none", height: "100%" }}>
-          <BookScreen active="book" onTab={go} />
+      {(screen === "venue" || screen === "bag" || screen === "me") && (
+        <div style={{ display: screen === "venue" ? "block" : "none", height: "100%" }}>
+          <BookScreen active="venue" onTab={go} />
         </div>
       )}
 
@@ -231,18 +231,19 @@ function PlayfairApp() {
         />
       )}
 
-      {screen === "profile" && (
+      {screen === "me" && (
         <ProfileScreen
           profile={profile}
           setProfile={persistProfile}
           hcp={hcp}
           initials={initials}
           avatar={avatar}
-          onAvatarClick={() => fileRef.current?.click()}
+          setAvatar={setAvatar}
+          userId={userId}
           onEditHcp={() => go("setup")}
           onViewBag={() => go("bag")}
           onLogout={handleLogout}
-          active="profile"
+          active="me"
           onTab={go}
         />
       )}
