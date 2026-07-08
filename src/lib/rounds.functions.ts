@@ -98,7 +98,15 @@ export const getCourse = createServerFn({ method: "POST" })
   });
 
 export const startRound = createServerFn({ method: "POST" })
-  .inputValidator((d: { playerId: string; courseId: string; teeBox: string }) => d)
+  .inputValidator((d: {
+    playerId: string; courseId: string; teeBox: string;
+    ownerUserId?: string | null;
+    settings?: {
+      mode?: string; scoring_format?: string; hcp_allowance?: number;
+      handicap_round?: boolean; go_live?: boolean; gps_only?: boolean;
+      holes_combination?: string; starts_at?: string | null;
+    };
+  }) => d)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cc = await supabaseAdmin.from("courses_cache").select("*").eq("id", data.courseId).maybeSingle();
@@ -107,6 +115,7 @@ export const startRound = createServerFn({ method: "POST" })
     const tee = tees.find((t) => t.tee_name === data.teeBox) || tees[0];
     const holes = (tee?.holes as any[]) || (cc.data.holes as any[]) || [];
     const total_par = holes.reduce((s, h) => s + (h.par || 0), 0);
+    const s = data.settings || {};
 
     const round = await supabaseAdmin.from("rounds").insert({
       player_id: data.playerId,
