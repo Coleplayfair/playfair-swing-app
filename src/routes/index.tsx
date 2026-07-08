@@ -74,7 +74,7 @@ function PlayfairApp() {
   const [selected, setSelected] = useState<Set<number>>(new Set(DEFAULT_SELECTED));
   const [clubs, setClubs] = useState<Club[]>(CLUBS.map((c) => ({ ...c })));
   const [avatar, setAvatar] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  
 
   const go = (s: Screen) => setScreen(s);
 
