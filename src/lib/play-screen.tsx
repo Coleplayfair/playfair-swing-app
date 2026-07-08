@@ -417,7 +417,7 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
           </div>
         )}
         {tab === "map" && <HoleMap gps={gps} green={green} />}
-        {tab === "score" && <ScoreEntry hole={hole} onSave={saveHole} />}
+        {tab === "score" && <HoleInput hole={hole} onSave={saveHole} />}
       </div>
 
       <div className="scorecard-strip">
