@@ -1,13 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 
-const API_BASE = "https://api.golfcourseapi.com/v1";
+const API_BASE = "https://golfapi.io/api/v2.3";
 
-async function gcaFetch(path: string, retries = 2): Promise<any> {
+async function gcaFetch(path: string, retries = 1): Promise<any> {
   const key = process.env.GOLF_COURSE_API_KEY;
   if (!key) throw new Error("GOLF_COURSE_API_KEY not set");
   for (let attempt = 0; attempt <= retries; attempt++) {
     const res = await fetch(`${API_BASE}${path}`, {
-      headers: { Authorization: `Key ${key}` },
+      headers: { Authorization: `Bearer ${key}` },
     });
     if (res.ok) return res.json();
     if (res.status === 429 && attempt < retries) {
@@ -17,53 +17,83 @@ async function gcaFetch(path: string, retries = 2): Promise<any> {
     if (res.status === 429) {
       throw new Error("Course directory is busy right now — please try again in a moment.");
     }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error("Course directory rejected the API key. Please check GOLF_COURSE_API_KEY.");
+    }
     const body = await res.text().catch(() => "");
-    throw new Error(`GolfCourseAPI ${res.status}: ${body.slice(0, 200)}`);
+    throw new Error(`GolfAPI ${res.status}: ${body.slice(0, 200)}`);
   }
   throw new Error("Course directory unavailable");
 }
 
+function normalizeCourse(course: any, coords?: any) {
+  const id = String(course?.courseID ?? "");
+  const name = course?.courseName || "Unknown course";
+  const club_name = course?.clubName ?? null;
+  const numHoles = parseInt(String(course?.numHoles ?? 18), 10) || 18;
+  const parsMen: number[] = Array.isArray(course?.parsMen) ? course.parsMen : [];
+  const indexesMen: number[] = Array.isArray(course?.indexesMen) ? course.indexesMen : [];
 
-function normalizeCourse(raw: any) {
-  const course = raw?.course ?? raw;
-  const id = String(course?.id ?? raw?.id ?? "");
-  const name = course?.course_name || course?.name || "Unknown course";
-  const club_name = course?.club_name ?? course?.club?.club_name ?? null;
-  const loc = course?.location ?? course?.club?.location ?? {};
-  const tees = course?.tees ?? {};
-  // GolfCourseAPI returns tees keyed by gender: { male: [...], female: [...] }
-  const teeList: any[] = [];
-  const collect = (arr: any) => Array.isArray(arr) && arr.forEach((t) => teeList.push(t));
-  if (Array.isArray(tees)) collect(tees);
-  else { collect(tees.male); collect(tees.female); }
-  const tee_boxes = teeList.map((t: any) => ({
-    tee_name: t.tee_name || t.name || "Default",
-    course_rating: t.course_rating ?? null,
-    slope_rating: t.slope_rating ?? null,
-    total_yards: t.total_yards ?? null,
-    par_total: t.par_total ?? null,
-    number_of_holes: t.number_of_holes ?? (Array.isArray(t.holes) ? t.holes.length : 18),
-    holes: (t.holes || []).map((h: any, i: number) => ({
-      // spread raw hole first so paid-tier fields (green_front/center/back, tee_lat/lng, etc.) pass through
-      ...h,
-      hole_number: h.hole_number ?? i + 1,
-      par: h.par ?? 4,
-      yardage: h.yardage ?? null,
-      handicap: h.handicap ?? null,
-    })),
-  }));
+  // Build greens per hole from /coordinates response. poi=1 marks the green;
+  // location: 3=front, 2=center, 1=back.
+  const greensByHole: Record<number, any> = {};
+  const coordList: any[] = coords?.coordinates ?? [];
+  for (const c of coordList) {
+    if (String(c.poi) !== "1") continue;
+    const h = Number(c.hole);
+    if (!Number.isFinite(h)) continue;
+    if (!greensByHole[h]) greensByHole[h] = {};
+    const loc = String(c.location);
+    const point = { lat: Number(c.latitude), lng: Number(c.longitude) };
+    if (loc === "3") greensByHole[h].green_front = point;
+    else if (loc === "2") greensByHole[h].green_center = point;
+    else if (loc === "1") greensByHole[h].green_back = point;
+  }
+
+  const teesRaw: any[] = Array.isArray(course?.tees) ? course.tees : [];
+  const tee_boxes = teesRaw.map((t: any) => {
+    const holes = Array.from({ length: numHoles }, (_, i) => {
+      const holeNum = i + 1;
+      const g = greensByHole[holeNum] || {};
+      const yardage = t[`length${holeNum}`];
+      return {
+        hole_number: holeNum,
+        par: parsMen[i] ?? 4,
+        yardage: typeof yardage === "number" ? yardage : (yardage ? Number(yardage) : null),
+        handicap: indexesMen[i] ?? null,
+        green_front: g.green_front ?? null,
+        green_center: g.green_center ?? null,
+        green_back: g.green_back ?? null,
+      };
+    });
+    const total_yards = holes.reduce((s, h) => s + (typeof h.yardage === "number" ? h.yardage : 0), 0);
+    const par_total = holes.reduce((s, h) => s + (h.par || 0), 0);
+    const rating = typeof t.courseRatingMen === "number" ? t.courseRatingMen : null;
+    const slope = typeof t.slopeMen === "number" ? t.slopeMen : null;
+    return {
+      tee_name: t.teeName || "Default",
+      tee_color: t.teeColor ?? null,
+      course_rating: rating,
+      slope_rating: slope,
+      total_yards,
+      par_total,
+      number_of_holes: numHoles,
+      holes,
+    };
+  });
+
   return {
     id,
     name,
     club_name,
-    city: loc.city ?? null,
-    region: loc.state ?? loc.region ?? null,
-    country: loc.country ?? null,
-    latitude: loc.latitude ?? course?.latitude ?? null,
-    longitude: loc.longitude ?? course?.longitude ?? null,
+    city: course?.city ?? null,
+    region: course?.state ?? null,
+    country: course?.country ?? null,
+    latitude: course?.latitude ? Number(course.latitude) : null,
+    longitude: course?.longitude ? Number(course.longitude) : null,
     tee_boxes,
     holes: tee_boxes[0]?.holes ?? [],
-    raw,
+    raw: { course, coords },
   };
 }
 
@@ -72,17 +102,18 @@ export const searchCourses = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const q = (data.query || "").trim();
     if (q.length < 2) return { courses: [] as any[] };
-    const raw = await gcaFetch(`/search?search_query=${encodeURIComponent(q)}`);
-    const list = raw?.courses ?? raw?.results ?? [];
+    const raw = await gcaFetch(`/courses?name=${encodeURIComponent(q)}`);
+    const list: any[] = raw?.courses ?? [];
     const courses = list.slice(0, 25).map((c: any) => ({
-      id: String(c.id),
-      name: c.course_name || c.name || "Course",
-      club_name: c.club_name ?? c.club?.club_name ?? null,
-      city: c.location?.city ?? c.club?.location?.city ?? null,
-      country: c.location?.country ?? c.club?.location?.country ?? null,
+      id: String(c.courseID),
+      name: c.courseName || "Course",
+      club_name: c.clubName ?? null,
+      city: c.city ?? null,
+      country: c.country ?? null,
     }));
     return { courses };
   });
+
 
 function hasGreenCoords(tee_boxes: any): boolean {
   const teeArr = Array.isArray(tee_boxes) ? tee_boxes : [];
@@ -99,7 +130,7 @@ export const getCourse = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cached = await supabaseAdmin.from("courses_cache").select("*").eq("id", data.courseId).maybeSingle();
-    // Auto-refresh cached rows that were stored before the paid-tier upgrade and lack green coordinates.
+    // Refresh cached rows that lack green coordinates (stored before the provider swap).
     const stale = cached.data && !hasGreenCoords(cached.data.tee_boxes);
     if (cached.data && !data.refresh && !stale) {
       const c = cached.data;
@@ -109,8 +140,14 @@ export const getCourse = createServerFn({ method: "POST" })
         tee_boxes: c.tee_boxes, holes: c.holes,
       };
     }
-    const raw = await gcaFetch(`/courses/${encodeURIComponent(data.courseId)}`);
-    const n = normalizeCourse(raw);
+    const course = await gcaFetch(`/courses/${encodeURIComponent(data.courseId)}`);
+    let coords: any = null;
+    if (String(course?.hasGPS ?? "0") === "1") {
+      try {
+        coords = await gcaFetch(`/coordinates/${encodeURIComponent(data.courseId)}`);
+      } catch { /* GPS optional; continue without */ }
+    }
+    const n = normalizeCourse(course, coords);
     await supabaseAdmin.from("courses_cache").upsert({
       id: n.id, name: n.name, club_name: n.club_name, city: n.city, region: n.region,
       country: n.country, latitude: n.latitude, longitude: n.longitude,
@@ -119,6 +156,7 @@ export const getCourse = createServerFn({ method: "POST" })
     const { raw: _r, ...rest } = n;
     return rest;
   });
+
 
 export const startRound = createServerFn({ method: "POST" })
   .inputValidator((d: {
@@ -233,13 +271,8 @@ export const listRounds = createServerFn({ method: "POST" })
     return { rounds: r.data || [] };
   });
 
-function kmBetween(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+
+
 
 export const nearbyCourses = createServerFn({ method: "POST" })
   .inputValidator((d: { lat: number; lng: number; radiusMeters?: number }) => d)
@@ -286,32 +319,34 @@ export const nearbyCourses = createServerFn({ method: "POST" })
       const region = findComp("administrative_area_level_1");
       const country = findComp("country");
 
-      // Try to match to GolfCourseAPI, but ONLY accept a match within MAX_MATCH_KM of the Places location
+      // Try to match to GolfAPI, but ONLY accept a match within MAX_MATCH_KM of the Places location.
+      // /courses supports lat/lng sorting + distance in the response, so use that.
       let matched: any = null;
       try {
-        const raw = await gcaFetch(`/search?search_query=${encodeURIComponent(displayName)}`);
-        const list: any[] = raw?.courses ?? raw?.results ?? [];
-        // Pick the closest candidate within MAX_MATCH_KM
+        const raw = await gcaFetch(
+          `/courses?name=${encodeURIComponent(displayName)}&lat=${pLat}&lng=${pLng}&measureUnit=km`
+        );
+        const list: any[] = raw?.courses ?? [];
+        // Prefer distance from the API; fall back to computed distance if missing.
         let best: { c: any; km: number } | null = null;
         for (const c of list) {
-          const loc = c.location ?? c.club?.location ?? {};
-          if (loc.latitude == null || loc.longitude == null) continue;
-          const km = kmBetween(pLat, pLng, loc.latitude, loc.longitude);
+          const km = typeof c.distance === "number" ? c.distance : Number.POSITIVE_INFINITY;
           if (km <= MAX_MATCH_KM && (!best || km < best.km)) best = { c, km };
         }
         matched = best?.c ?? null;
       } catch { /* ignore */ }
-      if (!matched?.id) continue; // require a verified GCA match so the course is playable
+      if (!matched?.courseID) continue; // require a verified match so the course is playable
 
       const course = {
-        id: String(matched.id),
-        name: matched.course_name || matched.name || displayName,
-        club_name: matched.club_name ?? matched.club?.club_name ?? null,
+        id: String(matched.courseID),
+        name: matched.courseName || displayName,
+        club_name: matched.clubName ?? null,
         city, region, country,
         latitude: pLat,
         longitude: pLng,
         photo_name: p.photos?.[0]?.name ?? null,
       };
+
 
       // Always refresh photo_name/location for nearby (Places is the authoritative source here)
       const existing = await supabaseAdmin.from("courses_cache").select("id,photo_name").eq("id", course.id).maybeSingle();
