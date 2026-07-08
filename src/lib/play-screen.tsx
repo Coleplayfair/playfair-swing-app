@@ -154,7 +154,7 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
         </button>
       </div>
 
-      <div className="pf-play-body">
+      <div className="pf-play-body" onClick={() => setShowComingSoon(true)}>
         <button className="pf-search-pill" onClick={onSearch}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <span>Search all courses</span>
@@ -204,17 +204,18 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
         )}
 
         {onBookBay && (
-          <>
+          <div data-allow-click="true">
             <div className="pf-section-label" style={{ marginTop: 24 }}>Playfair Venue</div>
-            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
-              Book Indoor Bay →
+            <button className="pf-btn-play pf-btn-play-full" onClick={(e) => { e.stopPropagation(); onBookBay(); }}>
+              Book a Bay at a Playfair Venue →
             </button>
             <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
               On-course GPS scoring is coming soon.
             </div>
-          </>
+          </div>
         )}
       </div>
+      {showComingSoon && <ComingSoonModal onClose={() => setShowComingSoon(false)} />}
     </>
   );
 }
