@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useState, lazy, Suspense } from "react";
 import {
   searchCourses, getCourse, startRound, getRound, updateHole,
   finishRound, listRounds, getUserStats, deleteRound, listMyCourses, nearbyCourses,
 } from "@/lib/rounds.functions";
 import { distanceYards, getPlayerId } from "@/lib/gps";
+import { useUnits, toDisplay, unitLabel } from "@/lib/units";
 import markWhite from "@/assets/pf-mark-white.png.asset.json";
 import coursePlaceholder from "@/assets/course-placeholder.jpg";
 
 import { RoundSettings, RoundDetails, HoleInput } from "@/lib/round-flow";
+
+const HoleMap = lazy(() => import("@/lib/hole-map.client"));
 
 type PlayView = "home" | "search" | "round" | "history" | "summary" | "settings" | "details";
 
