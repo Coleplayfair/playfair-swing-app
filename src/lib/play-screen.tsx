@@ -355,7 +355,11 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
   const hole = holes[holeIdx];
   const teeData = (data.course?.tee_boxes as any[])?.find((t) => t.tee_name === data.round.tee_box) || (data.course?.tee_boxes as any[])?.[0];
   const holeCoords = teeData?.holes?.[holeIdx] || {};
-  const green = holeCoords.green || holeCoords.green_center ? { front: holeCoords.green_front, center: holeCoords.green_center, back: holeCoords.green_back } : null;
+  const green = holeCoords.green_center || holeCoords.green_front || holeCoords.green_back
+    ? { front: holeCoords.green_front, center: holeCoords.green_center, back: holeCoords.green_back }
+    : null;
+
+  const [units, setU] = useUnits();
 
   const saveHole = async (patch: any) => {
     await updateHole({ data: { playerId: pid, roundId, holeNumber: hole.hole_number, patch } });
@@ -369,10 +373,11 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
   };
 
   const dist = (target: any) => {
-    if (!gps || !target?.latitude || !target?.longitude) return null;
-    return Math.round(distanceYards(gps, { lat: target.latitude, lng: target.longitude }));
+    if (!gps || !target?.lat || !target?.lng) return null;
+    return toDisplay(distanceYards(gps, { lat: target.lat, lng: target.lng }), units);
   };
   const dF = dist(green?.front), dC = dist(green?.center), dB = dist(green?.back);
+  const holeYd = typeof hole.yardage === "number" ? toDisplay(hole.yardage, units) : null;
 
   return (
     <>
@@ -389,11 +394,20 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
         <button className="hole-nav-btn" disabled={holeIdx === 0} onClick={() => setHoleIdx(holeIdx - 1)}>◀</button>
         <div className="hole-nav-info">
           <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            {hole.yardage ? `${hole.yardage} yds` : "Yardage —"}{hole.handicap ? ` · HCP ${hole.handicap}` : ""}
+            {holeYd != null ? `${holeYd} ${unitLabel(units)}` : "Yardage —"}{hole.handicap ? ` · HCP ${hole.handicap}` : ""}
           </div>
+          <button
+            className="units-toggle"
+            onClick={() => setU(units === "yards" ? "meters" : "yards")}
+            style={{ marginLeft: 8, fontSize: 10, letterSpacing: "0.08em", padding: "2px 8px", border: "1px solid #ccc", borderRadius: 999, background: "transparent", cursor: "pointer", textTransform: "uppercase" }}
+            aria-label="Toggle units"
+          >
+            {units === "yards" ? "yds" : "m"}
+          </button>
         </div>
         <button className="hole-nav-btn" disabled={holeIdx === holes.length - 1} onClick={() => setHoleIdx(holeIdx + 1)}>▶</button>
       </div>
+
 
       <div className="round-tabs">
         {(["gps", "map", "score"] as const).map((t) => (
