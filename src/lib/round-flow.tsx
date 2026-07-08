@@ -482,15 +482,15 @@ export function HoleInput({ hole, onSave }: { hole: any; onSave: (patch: any) =>
 
   return (
     <div className="hi-body">
-      <div className="hi-header">Input</div>
-      <StepperRow label="Total Strokes" value={strokes} onChange={(v: number) => set("score", v, setStrokes)} />
-      <div className="hi-hint">How many were:</div>
-      <StepperRow label="Putts" value={putts} onChange={(v: number) => set("putts", v, setPutts)} />
-      <StepperRow label="Sand Shots" value={sand} onChange={(v: number) => set("sand_shots", v, setSand)} />
-      <StepperRow label="Penalties" value={pen} onChange={(v: number) => set("penalties", v, setPen)} />
+      <div className="hi-header">Card the hole</div>
+      <StepperRow label="Strokes on hole" value={strokes} onChange={(v: number) => set("score", v, setStrokes)} />
+      <div className="hi-hint">Break it down —</div>
+      <StepperRow label="Putts on green" value={putts} onChange={(v: number) => set("putts", v, setPutts)} />
+      <StepperRow label="Bunker shots" value={sand} onChange={(v: number) => set("sand_shots", v, setSand)} />
+      <StepperRow label="Penalty strokes" value={pen} onChange={(v: number) => set("penalties", v, setPen)} />
       {hole.par >= 4 && (
         <div className="hi-row">
-          <div className="hi-row-lbl">Fairways</div>
+          <div className="hi-row-lbl">Off the tee</div>
           <div className="hi-fw-btns">
             <FwBtn dir="left" sym="↖" />
             <FwBtn dir="straight" sym="●" />
@@ -500,8 +500,8 @@ export function HoleInput({ hole, onSave }: { hole: any; onSave: (patch: any) =>
         </div>
       )}
       <div className="hi-pills">
-        <Pill label="GIR" value={gir} onToggle={() => set("gir", !gir, setGir)} />
-        <Pill label="Sand Saves" value={sandSave} onToggle={() => set("sand_save", !sandSave, setSandSave)} />
+        <Pill label="Green in Reg" value={gir} onToggle={() => set("gir", !gir, setGir)} />
+        <Pill label="Sand Save" value={sandSave} onToggle={() => set("sand_save", !sandSave, setSandSave)} />
         <Pill label="Up & Down" value={upDown} onToggle={() => set("up_down", !upDown, setUpDown)} />
       </div>
     </div>
