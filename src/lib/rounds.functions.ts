@@ -28,7 +28,7 @@ async function gcaFetch(path: string, retries = 1): Promise<any> {
 
 function normalizeCourse(course: any, coords?: any) {
   const id = String(course?.courseID ?? "");
-  const name = course?.courseName || "Unknown course";
+  const name = displayName(course?.courseName, course?.clubName);
   const club_name = course?.clubName ?? null;
   const numHoles = parseInt(String(course?.numHoles ?? 18), 10) || 18;
   const parsMen: number[] = Array.isArray(course?.parsMen) ? course.parsMen : [];
@@ -97,6 +97,16 @@ function normalizeCourse(course: any, coords?: any) {
   };
 }
 
+function displayName(courseName: any, clubName: any): string {
+  const c = String(courseName || "").trim();
+  const club = String(clubName || "").trim();
+  // Provider often returns "18-hole course" / "9-hole course" as courseName.
+  if (!c || /^\d+[-\s]?hole\s+course$/i.test(c) || c.toLowerCase() === "course") {
+    return club || c || "Unknown course";
+  }
+  return c;
+}
+
 export const searchCourses = createServerFn({ method: "POST" })
   .inputValidator((d: { query: string }) => d)
   .handler(async ({ data }) => {
@@ -106,7 +116,7 @@ export const searchCourses = createServerFn({ method: "POST" })
     const list: any[] = raw?.courses ?? [];
     const courses = list.slice(0, 25).map((c: any) => ({
       id: String(c.courseID),
-      name: c.courseName || "Course",
+      name: displayName(c.courseName, c.clubName),
       club_name: c.clubName ?? null,
       city: c.city ?? null,
       country: c.country ?? null,
@@ -304,10 +314,10 @@ export const nearbyCourses = createServerFn({ method: "POST" })
     const MAX_MATCH_KM = 25;
 
     for (const p of places) {
-      const displayName = p?.displayName?.text || "";
+      const placeName = p?.displayName?.text || "";
       const pLat = p?.location?.latitude;
       const pLng = p?.location?.longitude;
-      if (!displayName || pLat == null || pLng == null) continue;
+      if (!placeName || pLat == null || pLng == null) continue;
 
       // Parse address components for city/region/country from Places (authoritative for location)
       const comps: any[] = p?.addressComponents ?? [];
@@ -324,7 +334,7 @@ export const nearbyCourses = createServerFn({ method: "POST" })
       let matched: any = null;
       try {
         const raw = await gcaFetch(
-          `/courses?name=${encodeURIComponent(displayName)}&lat=${pLat}&lng=${pLng}&measureUnit=km`
+          `/courses?name=${encodeURIComponent(placeName)}&lat=${pLat}&lng=${pLng}&measureUnit=km`
         );
         const list: any[] = raw?.courses ?? [];
         // Prefer distance from the API; fall back to computed distance if missing.
@@ -339,13 +349,14 @@ export const nearbyCourses = createServerFn({ method: "POST" })
 
       const course = {
         id: String(matched.courseID),
-        name: matched.courseName || displayName,
+        name: displayName(matched.courseName, matched.clubName) || placeName,
         club_name: matched.clubName ?? null,
         city, region, country,
         latitude: pLat,
         longitude: pLng,
         photo_name: p.photos?.[0]?.name ?? null,
       };
+
 
 
       // Always refresh photo_name/location for nearby (Places is the authoritative source here)

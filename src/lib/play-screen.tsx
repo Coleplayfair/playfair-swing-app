@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useState, lazy, Suspense } from "react";
 import {
   searchCourses, getCourse, startRound, getRound, updateHole,
   finishRound, listRounds, getUserStats, deleteRound, listMyCourses, nearbyCourses,
 } from "@/lib/rounds.functions";
 import { distanceYards, getPlayerId } from "@/lib/gps";
+import { useUnits, toDisplay, unitLabel } from "@/lib/units";
 import markWhite from "@/assets/pf-mark-white.png.asset.json";
 import coursePlaceholder from "@/assets/course-placeholder.jpg";
 
 import { RoundSettings, RoundDetails, HoleInput } from "@/lib/round-flow";
+
+const HoleMap = lazy(() => import("@/lib/hole-map.client"));
 
 type PlayView = "home" | "search" | "round" | "history" | "summary" | "settings" | "details";
 
@@ -173,7 +173,7 @@ function CourseCard({ course, gps, onPlay, onPreview, synced }: {
     ? Math.round(haversineKm(gps.lat, gps.lng, course.latitude, course.longitude))
     : null;
   const location = [course.city, course.region || course.country].filter(Boolean).join(", ");
-  const photoSrc = `/api/public/course-photo/${course.id}?name=${encodeURIComponent([course.name, course.club_name].filter(Boolean).join(" "))}`;
+  const photoSrc = `/api/public/course-photo/${course.id}?name=${encodeURIComponent(course.club_name || course.name || "")}`;
   return (
     <div className="pf-course-card">
       <img
@@ -355,7 +355,11 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
   const hole = holes[holeIdx];
   const teeData = (data.course?.tee_boxes as any[])?.find((t) => t.tee_name === data.round.tee_box) || (data.course?.tee_boxes as any[])?.[0];
   const holeCoords = teeData?.holes?.[holeIdx] || {};
-  const green = holeCoords.green || holeCoords.green_center ? { front: holeCoords.green_front, center: holeCoords.green_center, back: holeCoords.green_back } : null;
+  const green = holeCoords.green_center || holeCoords.green_front || holeCoords.green_back
+    ? { front: holeCoords.green_front, center: holeCoords.green_center, back: holeCoords.green_back }
+    : null;
+
+  const [units, setU] = useUnits();
 
   const saveHole = async (patch: any) => {
     await updateHole({ data: { playerId: pid, roundId, holeNumber: hole.hole_number, patch } });
@@ -369,10 +373,11 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
   };
 
   const dist = (target: any) => {
-    if (!gps || !target?.latitude || !target?.longitude) return null;
-    return Math.round(distanceYards(gps, { lat: target.latitude, lng: target.longitude }));
+    if (!gps || !target?.lat || !target?.lng) return null;
+    return toDisplay(distanceYards(gps, { lat: target.lat, lng: target.lng }), units);
   };
   const dF = dist(green?.front), dC = dist(green?.center), dB = dist(green?.back);
+  const holeYd = typeof hole.yardage === "number" ? toDisplay(hole.yardage, units) : null;
 
   return (
     <>
@@ -389,11 +394,20 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
         <button className="hole-nav-btn" disabled={holeIdx === 0} onClick={() => setHoleIdx(holeIdx - 1)}>◀</button>
         <div className="hole-nav-info">
           <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            {hole.yardage ? `${hole.yardage} yds` : "Yardage —"}{hole.handicap ? ` · HCP ${hole.handicap}` : ""}
+            {holeYd != null ? `${holeYd} ${unitLabel(units)}` : "Yardage —"}{hole.handicap ? ` · HCP ${hole.handicap}` : ""}
           </div>
+          <button
+            className="units-toggle"
+            onClick={() => setU(units === "yards" ? "meters" : "yards")}
+            style={{ marginLeft: 8, fontSize: 10, letterSpacing: "0.08em", padding: "2px 8px", border: "1px solid #ccc", borderRadius: 999, background: "transparent", cursor: "pointer", textTransform: "uppercase" }}
+            aria-label="Toggle units"
+          >
+            {units === "yards" ? "yds" : "m"}
+          </button>
         </div>
         <button className="hole-nav-btn" disabled={holeIdx === holes.length - 1} onClick={() => setHoleIdx(holeIdx + 1)}>▶</button>
       </div>
+
 
       <div className="round-tabs">
         {(["gps", "map", "score"] as const).map((t) => (
@@ -410,7 +424,7 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
               <>
                 <div className="gps-mid">
                   <div className="gps-mid-n">{dC ?? "—"}</div>
-                  <div className="gps-mid-l">yds to centre</div>
+                  <div className="gps-mid-l">{unitLabel(units, true)} to centre</div>
                 </div>
                 <div className="gps-side">
                   <div><div className="gps-side-n">{dF ?? "—"}</div><div className="gps-side-l">Front</div></div>
@@ -420,7 +434,11 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
             )}
           </div>
         )}
-        {tab === "map" && <HoleMap gps={gps} green={green} />}
+        {tab === "map" && (
+          <Suspense fallback={<div className="gps-note" style={{ padding: 24 }}>Loading map…</div>}>
+            <HoleMap gps={gps} green={green} />
+          </Suspense>
+        )}
         {tab === "score" && <HoleInput hole={hole} onSave={saveHole} />}
       </div>
 
@@ -480,35 +498,7 @@ function Stepper({ label, value, onChange, min = 1, max = 15, par }: { label: st
   );
 }
 
-/* ─────── MAP ─────── */
-function HoleMap({ gps, green }: { gps: { lat: number; lng: number } | null; green: any }) {
-  const center = green?.center ? [green.center.latitude, green.center.longitude] as [number, number]
-    : gps ? [gps.lat, gps.lng] as [number, number]
-    : [0, 0] as [number, number];
-  if (!gps && !green?.center) {
-    return <div className="gps-note" style={{ padding: 24 }}>Enable location to see the map.</div>;
-  }
-  const greenIcon = L.divIcon({ className: "green-pin", html: "<div></div>", iconSize: [18, 18] });
-  const meIcon = L.divIcon({ className: "me-pin", html: "<div></div>", iconSize: [18, 18] });
-  return (
-    <div className="map-wrap">
-      <MapContainer center={center} zoom={17} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
-        <TileLayer attribution="© OpenStreetMap" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {gps && <Marker position={[gps.lat, gps.lng]} icon={meIcon} />}
-        {green?.front && <Marker position={[green.front.latitude, green.front.longitude]} icon={greenIcon} />}
-        {green?.center && <Marker position={[green.center.latitude, green.center.longitude]} icon={greenIcon} />}
-        {green?.back && <Marker position={[green.back.latitude, green.back.longitude]} icon={greenIcon} />}
-        {gps && <Circle center={[gps.lat, gps.lng]} radius={5} pathOptions={{ color: "#094811" }} />}
-        <Recenter center={center} />
-      </MapContainer>
-    </div>
-  );
-}
-function Recenter({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => { map.setView(center); }, [center[0], center[1]]);
-  return null;
-}
+/* HoleMap moved to hole-map.client.tsx (client-only, leaflet needs window) */
 
 /* ─────── SUMMARY ─────── */
 function RoundSummary({ roundId, onDone }: { roundId: string; onDone: () => void }) {
