@@ -363,3 +363,84 @@ export const getUserStats = createServerFn({ method: "POST" })
       last10: rows.slice(0, 10).reverse().map((x) => ({ score: x.total_score, par: x.total_par, date: x.ended_at })),
     };
   });
+
+/* ═════════════ ROUND SETTINGS & PLAYERS ═════════════ */
+
+export const updateRoundSettings = createServerFn({ method: "POST" })
+  .inputValidator((d: { playerId: string; roundId: string; patch: Record<string, any> }) => d)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const owns = await supabaseAdmin.from("rounds").select("id").eq("id", data.roundId).eq("player_id", data.playerId).maybeSingle();
+    if (!owns.data) throw new Error("Not authorized");
+    const allowed = ["mode", "scoring_format", "hcp_allowance", "handicap_round", "go_live", "gps_only", "holes_combination", "starts_at", "tee_box"];
+    const patch: any = {};
+    for (const k of allowed) if (k in data.patch) patch[k] = data.patch[k];
+    await supabaseAdmin.from("rounds").update(patch).eq("id", data.roundId);
+    return { ok: true };
+  });
+
+export const listRoundPlayers = createServerFn({ method: "POST" })
+  .inputValidator((d: { roundId: string }) => d)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const p = await supabaseAdmin.from("round_players").select("*").eq("round_id", data.roundId).order("position");
+    const rows = p.data || [];
+    const uids = rows.map((r: any) => r.user_id).filter(Boolean);
+    let profByUid: Record<string, any> = {};
+    if (uids.length) {
+      const pr = await supabaseAdmin.from("profiles").select("id,first_name,last_name,avatar_url,handicap,suburb").in("id", uids);
+      for (const p of pr.data || []) profByUid[p.id] = p;
+    }
+    return {
+      players: rows.map((r: any) => ({
+        id: r.id,
+        user_id: r.user_id,
+        guest_name: r.guest_name,
+        guest_hcp: r.guest_hcp,
+        playing_hcp: r.playing_hcp,
+        group_number: r.group_number,
+        position: r.position,
+        profile: r.user_id ? profByUid[r.user_id] : null,
+      })),
+    };
+  });
+
+export const addRoundPlayer = createServerFn({ method: "POST" })
+  .inputValidator((d: { playerId: string; roundId: string; buddyUserId?: string; guestName?: string; guestHcp?: number | null; groupNumber?: number }) => d)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const owns = await supabaseAdmin.from("rounds").select("id,player_id").eq("id", data.roundId).eq("player_id", data.playerId).maybeSingle();
+    if (!owns.data) throw new Error("Not authorized");
+    const existing = await supabaseAdmin.from("round_players").select("position").eq("round_id", data.roundId).order("position", { ascending: false }).limit(1);
+    const nextPos = (existing.data?.[0]?.position ?? -1) + 1;
+    const ins = await supabaseAdmin.from("round_players").insert({
+      round_id: data.roundId,
+      user_id: data.buddyUserId ?? null,
+      guest_name: data.guestName ?? null,
+      guest_hcp: data.guestHcp ?? null,
+      group_number: data.groupNumber ?? 1,
+      position: nextPos,
+    }).select().single();
+    if (ins.error) throw ins.error;
+    return { id: ins.data.id };
+  });
+
+export const removeRoundPlayer = createServerFn({ method: "POST" })
+  .inputValidator((d: { playerId: string; roundId: string; roundPlayerId: string }) => d)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const owns = await supabaseAdmin.from("rounds").select("id").eq("id", data.roundId).eq("player_id", data.playerId).maybeSingle();
+    if (!owns.data) throw new Error("Not authorized");
+    await supabaseAdmin.from("round_players").delete().eq("id", data.roundPlayerId).eq("round_id", data.roundId);
+    return { ok: true };
+  });
+
+export const getRoundByJoinToken = createServerFn({ method: "POST" })
+  .inputValidator((d: { token: string }) => d)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const r = await supabaseAdmin.from("rounds").select("id,course_name,status,started_at,starts_at,scoring_format,hcp_allowance").eq("join_token", data.token).maybeSingle();
+    if (!r.data) throw new Error("Invalid join link");
+    return { round: r.data };
+  });
+
