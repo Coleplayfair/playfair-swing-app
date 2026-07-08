@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { CLUBS, CLUB_SVGS, DEFAULT_SELECTED, type Club } from "@/lib/clubs";
 import { supabase } from "@/integrations/supabase/client";
