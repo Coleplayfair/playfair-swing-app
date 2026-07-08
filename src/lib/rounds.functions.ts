@@ -192,6 +192,75 @@ export const listRounds = createServerFn({ method: "POST" })
     return { rounds: r.data || [] };
   });
 
+export const nearbyCourses = createServerFn({ method: "POST" })
+  .inputValidator((d: { lat: number; lng: number; radiusMeters?: number }) => d)
+  .handler(async ({ data }) => {
+    const key = process.env.GOOGLE_API_KEY;
+    if (!key) return { courses: [] as any[] };
+    const radius = Math.min(Math.max(data.radiusMeters ?? 30000, 1000), 50000);
+    // Google Places v1 Nearby Search — golf courses
+    const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.photos",
+      },
+      body: JSON.stringify({
+        includedTypes: ["golf_course"],
+        maxResultCount: 10,
+        locationRestriction: { circle: { center: { latitude: data.lat, longitude: data.lng }, radius } },
+        rankPreference: "DISTANCE",
+      }),
+    });
+    if (!res.ok) return { courses: [] as any[] };
+    const json: any = await res.json();
+    const places: any[] = json?.places ?? [];
+    if (!places.length) return { courses: [] as any[] };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const out: any[] = [];
+    for (const p of places) {
+      const displayName = p?.displayName?.text || "";
+      if (!displayName) continue;
+      let matched: any = null;
+      try {
+        const raw = await gcaFetch(`/search?search_query=${encodeURIComponent(displayName)}`);
+        const list = raw?.courses ?? raw?.results ?? [];
+        matched = list[0] || null;
+      } catch { /* ignore */ }
+      if (!matched?.id) continue;
+      const loc = matched.location ?? matched.club?.location ?? {};
+      const course = {
+        id: String(matched.id),
+        name: matched.course_name || matched.name || displayName,
+        club_name: matched.club_name ?? matched.club?.club_name ?? null,
+        city: loc.city ?? null,
+        region: loc.state ?? loc.region ?? null,
+        country: loc.country ?? null,
+        latitude: loc.latitude ?? p.location?.latitude ?? null,
+        longitude: loc.longitude ?? p.location?.longitude ?? null,
+        photo_name: p.photos?.[0]?.name ?? null,
+      };
+      // Upsert lightweight cache row so /api/public/course-photo can serve immediately
+      await supabaseAdmin.from("courses_cache").upsert({
+        id: course.id,
+        name: course.name,
+        club_name: course.club_name,
+        city: course.city,
+        region: course.region,
+        country: course.country,
+        latitude: course.latitude,
+        longitude: course.longitude,
+        photo_name: course.photo_name,
+        photo_checked_at: course.photo_name ? new Date().toISOString() : null,
+      }, { onConflict: "id", ignoreDuplicates: true });
+      out.push(course);
+      if (out.length >= 10) break;
+    }
+    return { courses: out };
+  });
+
 export const listMyCourses = createServerFn({ method: "POST" })
   .inputValidator((d: { playerId: string }) => d)
   .handler(async ({ data }) => {
