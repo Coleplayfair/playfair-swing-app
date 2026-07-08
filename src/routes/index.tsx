@@ -964,7 +964,7 @@ function BottomNav({ active, onTab }: { active: NavTab; onTab: (s: Screen) => vo
     <div className="bottom-nav">
       <button className={"nav-item" + (active === "play" ? " active" : "")} onClick={() => onTab("play")}>
         <span className="nav-ico"><FlagIcon size={22} /></span>
-        <span className="nav-lbl">Play On Course</span>
+        <span className="nav-lbl">On Course</span>
       </button>
       <button className={"nav-item" + (active === "performance" ? " active" : "")} onClick={() => onTab("performance")}>
         <span className="nav-ico"><PerfIcon size={22} /></span>
