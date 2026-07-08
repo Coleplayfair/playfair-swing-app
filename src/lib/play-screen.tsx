@@ -28,6 +28,19 @@ function requestCurrentLocation(onSuccess: (gps: LatLng) => void, onError?: (mes
   );
 }
 
+function ComingSoonModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="venue-tip-overlay" onClick={onClose}>
+      <div className="venue-tip-card" onClick={(e) => e.stopPropagation()}>
+        <button className="venue-tip-close" onClick={onClose}>✕</button>
+        <div className="venue-tip-title">Coming Soon</div>
+        <div className="venue-tip-body">Coming soon to the Playfair app.</div>
+        <button className="venue-tip-btn" onClick={onClose}>Got it</button>
+      </div>
+    </div>
+  );
+}
+
 /* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
 export function PlayScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNode; onBookBay?: () => void }) {
   const [view, setView] = useState<PlayView>("home");
