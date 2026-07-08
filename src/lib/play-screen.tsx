@@ -53,6 +53,7 @@ export function PlayScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNod
           onHistory={() => setView("history")}
           onResume={openRound}
           onPickCourse={startFromCourse}
+          onBookBay={onBookBay}
         />
       )}
       {view === "search" && (
