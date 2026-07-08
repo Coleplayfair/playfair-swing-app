@@ -25,6 +25,8 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           name: string
+          photo_checked_at: string | null
+          photo_name: string | null
           raw: Json | null
           region: string | null
           tee_boxes: Json
@@ -40,6 +42,8 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name: string
+          photo_checked_at?: string | null
+          photo_name?: string | null
           raw?: Json | null
           region?: string | null
           tee_boxes?: Json
@@ -55,6 +59,8 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name?: string
+          photo_checked_at?: string | null
+          photo_name?: string | null
           raw?: Json | null
           region?: string | null
           tee_boxes?: Json
