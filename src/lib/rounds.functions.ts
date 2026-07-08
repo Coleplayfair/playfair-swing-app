@@ -124,6 +124,15 @@ export const startRound = createServerFn({ method: "POST" })
       tee_box: tee?.tee_name ?? null,
       status: "active",
       total_par,
+      owner_user_id: data.ownerUserId ?? null,
+      mode: s.mode ?? "general_play",
+      scoring_format: s.scoring_format ?? "stroke",
+      hcp_allowance: s.hcp_allowance ?? 100,
+      handicap_round: s.handicap_round ?? false,
+      go_live: s.go_live ?? false,
+      gps_only: s.gps_only ?? false,
+      holes_combination: s.holes_combination ?? "18",
+      starts_at: s.starts_at ?? null,
     }).select().single();
     if (round.error) throw round.error;
 
