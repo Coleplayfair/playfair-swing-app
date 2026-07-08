@@ -17,10 +17,13 @@ async function gcaFetch(path: string, retries = 1): Promise<any> {
     if (res.status === 429) {
       throw new Error("Course directory is busy right now — please try again in a moment.");
     }
+    const body = await res.text().catch(() => "");
+    if (/limit exceeded|quota/i.test(body)) {
+      throw new Error("Course directory monthly request limit reached. Please try again later.");
+    }
     if (res.status === 401 || res.status === 403) {
       throw new Error("Course directory rejected the API key. Please check GOLF_COURSE_API_KEY.");
     }
-    const body = await res.text().catch(() => "");
     throw new Error(`GolfAPI ${res.status}: ${body.slice(0, 200)}`);
   }
   throw new Error("Course directory unavailable");
@@ -112,16 +115,43 @@ export const searchCourses = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const q = (data.query || "").trim();
     if (q.length < 2) return { courses: [] as any[] };
-    const raw = await gcaFetch(`/courses?name=${encodeURIComponent(q)}`);
-    const list: any[] = raw?.courses ?? [];
-    const courses = list.slice(0, 25).map((c: any) => ({
-      id: String(c.courseID),
-      name: displayName(c.courseName, c.clubName),
-      club_name: c.clubName ?? null,
-      city: c.city ?? null,
-      country: c.country ?? null,
-    }));
-    return { courses };
+    try {
+      const raw = await gcaFetch(`/courses?name=${encodeURIComponent(q)}`);
+      const list: any[] = raw?.courses ?? [];
+      const courses = list.slice(0, 25).map((c: any) => ({
+        id: String(c.courseID),
+        name: displayName(c.courseName, c.clubName),
+        club_name: c.clubName ?? null,
+        city: c.city ?? null,
+        country: c.country ?? null,
+      }));
+      if (courses.length) return { courses };
+    } catch (err: any) {
+      // Fall through to cached search on API errors (quota, auth, etc.)
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const like = `%${q}%`;
+      const r = await supabaseAdmin
+        .from("courses_cache")
+        .select("id,name,club_name,city,country")
+        .or(`name.ilike.${like},club_name.ilike.${like},city.ilike.${like}`)
+        .limit(25);
+      const cached = (r.data || []).map((c: any) => ({
+        id: c.id, name: c.name, club_name: c.club_name, city: c.city, country: c.country,
+      }));
+      if (cached.length) return { courses: cached, notice: String(err?.message || "") };
+      throw err;
+    }
+    // No API results — try cache as a fallback too.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const like = `%${q}%`;
+    const r = await supabaseAdmin
+      .from("courses_cache")
+      .select("id,name,club_name,city,country")
+      .or(`name.ilike.${like},club_name.ilike.${like},city.ilike.${like}`)
+      .limit(25);
+    return { courses: (r.data || []).map((c: any) => ({
+      id: c.id, name: c.name, club_name: c.club_name, city: c.city, country: c.country,
+    })) };
   });
 
 
