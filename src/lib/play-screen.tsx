@@ -710,7 +710,7 @@ export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.R
         <span className="pf-play-header-title">Performance</span>
         <span style={{ width: 34 }} />
       </div>
-      <div className="pf-play-body pf-perf-body">
+      <div className="pf-play-body pf-perf-body" onClick={() => setShowComingSoon(true)}>
         {/* Rounds card */}
         <div className="pf-perf-card">
           <div className="pf-perf-card-hdr">
@@ -767,16 +767,17 @@ export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.R
         </div>
 
         {onBookBay && (
-          <>
-            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
-              Book Indoor Bay →
+          <div data-allow-click="true">
+            <button className="pf-btn-play pf-btn-play-full" onClick={(e) => { e.stopPropagation(); onBookBay(); }}>
+              Book a Bay at a Playfair Venue →
             </button>
             <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
               Advanced stats and insights are coming soon.
             </div>
-          </>
+          </div>
         )}
       </div>
+      {showComingSoon && <ComingSoonModal onClose={() => setShowComingSoon(false)} />}
       {bottomNav}
     </div>
   );
