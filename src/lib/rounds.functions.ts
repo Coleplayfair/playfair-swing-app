@@ -35,6 +35,8 @@ function normalizeCourse(raw: any) {
     par_total: t.par_total ?? null,
     number_of_holes: t.number_of_holes ?? (Array.isArray(t.holes) ? t.holes.length : 18),
     holes: (t.holes || []).map((h: any, i: number) => ({
+      // spread raw hole first so paid-tier fields (green_front/center/back, tee_lat/lng, etc.) pass through
+      ...h,
       hole_number: h.hole_number ?? i + 1,
       par: h.par ?? 4,
       yardage: h.yardage ?? null,
