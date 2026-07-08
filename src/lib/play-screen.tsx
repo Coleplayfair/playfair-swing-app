@@ -10,7 +10,9 @@ import { distanceYards, getPlayerId } from "@/lib/gps";
 import markWhite from "@/assets/pf-mark-white.png.asset.json";
 import coursePlaceholder from "@/assets/course-placeholder.jpg";
 
-type PlayView = "home" | "search" | "round" | "history" | "summary" | "tee-picker";
+import { RoundSettings, RoundDetails, HoleInput } from "@/lib/round-flow";
+
+type PlayView = "home" | "search" | "round" | "history" | "summary" | "settings" | "details";
 
 /* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
 export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
