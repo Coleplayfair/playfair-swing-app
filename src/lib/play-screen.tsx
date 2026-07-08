@@ -10,7 +10,9 @@ import { distanceYards, getPlayerId } from "@/lib/gps";
 import markWhite from "@/assets/pf-mark-white.png.asset.json";
 import coursePlaceholder from "@/assets/course-placeholder.jpg";
 
-type PlayView = "home" | "search" | "round" | "history" | "summary" | "tee-picker";
+import { RoundSettings, RoundDetails, HoleInput } from "@/lib/round-flow";
+
+type PlayView = "home" | "search" | "round" | "history" | "summary" | "settings" | "details";
 
 /* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
 export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
@@ -20,7 +22,7 @@ export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
 
   const openRound = (id: string) => { setActiveRoundId(id); setView("round"); };
   const showSummary = (id: string) => { setActiveRoundId(id); setView("summary"); };
-  const startFromCourse = (c: any) => { setPickCourse(c); setView("tee-picker"); };
+  const startFromCourse = (c: any) => { setPickCourse(c); setView("settings"); };
 
   return (
     <div className="screen">
@@ -35,8 +37,19 @@ export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
       {view === "search" && (
         <CourseSearch onBack={() => setView("home")} onPick={startFromCourse} />
       )}
-      {view === "tee-picker" && pickCourse && (
-        <TeePicker course={pickCourse} onBack={() => setView("home")} onStarted={openRound} />
+      {view === "settings" && pickCourse && (
+        <RoundSettings
+          course={pickCourse}
+          onBack={() => setView("home")}
+          onCreated={(id) => { setActiveRoundId(id); setView("details"); }}
+        />
+      )}
+      {view === "details" && activeRoundId && (
+        <RoundDetails
+          roundId={activeRoundId}
+          onClose={() => setView("home")}
+          onStart={() => setView("round")}
+        />
       )}
       {view === "round" && activeRoundId && (
         <ActiveRound roundId={activeRoundId} onExit={() => setView("home")} onFinish={() => showSummary(activeRoundId)} />
@@ -404,7 +417,7 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
           </div>
         )}
         {tab === "map" && <HoleMap gps={gps} green={green} />}
-        {tab === "score" && <ScoreEntry hole={hole} onSave={saveHole} />}
+        {tab === "score" && <HoleInput hole={hole} onSave={saveHole} />}
       </div>
 
       <div className="scorecard-strip">

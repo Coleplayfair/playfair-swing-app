@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      buddies: {
+        Row: {
+          accepted_at: string | null
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["buddy_status"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["buddy_status"]
+        }
+        Update: {
+          accepted_at?: string | null
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["buddy_status"]
+        }
+        Relationships: []
+      }
       courses_cache: {
         Row: {
           city: string | null
@@ -110,6 +137,7 @@ export type Database = {
       round_holes: {
         Row: {
           drive_distance: number | null
+          fairway_direction: string | null
           fairway_hit: boolean | null
           gir: boolean | null
           handicap: number | null
@@ -120,12 +148,17 @@ export type Database = {
           penalties: number
           putts: number | null
           round_id: string
+          round_player_id: string | null
+          sand_save: boolean | null
+          sand_shots: number
           score: number | null
+          up_down: boolean | null
           updated_at: string
           yardage: number | null
         }
         Insert: {
           drive_distance?: number | null
+          fairway_direction?: string | null
           fairway_hit?: boolean | null
           gir?: boolean | null
           handicap?: number | null
@@ -136,12 +169,17 @@ export type Database = {
           penalties?: number
           putts?: number | null
           round_id: string
+          round_player_id?: string | null
+          sand_save?: boolean | null
+          sand_shots?: number
           score?: number | null
+          up_down?: boolean | null
           updated_at?: string
           yardage?: number | null
         }
         Update: {
           drive_distance?: number | null
+          fairway_direction?: string | null
           fairway_hit?: boolean | null
           gir?: boolean | null
           handicap?: number | null
@@ -152,13 +190,61 @@ export type Database = {
           penalties?: number
           putts?: number | null
           round_id?: string
+          round_player_id?: string | null
+          sand_save?: boolean | null
+          sand_shots?: number
           score?: number | null
+          up_down?: boolean | null
           updated_at?: string
           yardage?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "round_holes_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      round_players: {
+        Row: {
+          created_at: string
+          group_number: number
+          guest_hcp: number | null
+          guest_name: string | null
+          id: string
+          playing_hcp: number | null
+          position: number
+          round_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          group_number?: number
+          guest_hcp?: number | null
+          guest_name?: string | null
+          id?: string
+          playing_hcp?: number | null
+          position?: number
+          round_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          group_number?: number
+          guest_hcp?: number | null
+          guest_name?: string | null
+          id?: string
+          playing_hcp?: number | null
+          position?: number
+          round_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_players_round_id_fkey"
             columns: ["round_id"]
             isOneToOne: false
             referencedRelation: "rounds"
@@ -174,12 +260,22 @@ export type Database = {
           ended_at: string | null
           fairways_hit: number
           fairways_possible: number
+          go_live: boolean
+          gps_only: boolean
           greens_in_reg: number
+          handicap_round: boolean
+          hcp_allowance: number
+          holes_combination: string
           id: string
+          join_token: string
+          mode: string
           notes: string | null
+          owner_user_id: string | null
           penalties: number
           player_id: string
+          scoring_format: string
           started_at: string
+          starts_at: string | null
           status: string
           tee_box: string | null
           total_par: number
@@ -195,12 +291,22 @@ export type Database = {
           ended_at?: string | null
           fairways_hit?: number
           fairways_possible?: number
+          go_live?: boolean
+          gps_only?: boolean
           greens_in_reg?: number
+          handicap_round?: boolean
+          hcp_allowance?: number
+          holes_combination?: string
           id?: string
+          join_token?: string
+          mode?: string
           notes?: string | null
+          owner_user_id?: string | null
           penalties?: number
           player_id: string
+          scoring_format?: string
           started_at?: string
+          starts_at?: string | null
           status?: string
           tee_box?: string | null
           total_par?: number
@@ -216,12 +322,22 @@ export type Database = {
           ended_at?: string | null
           fairways_hit?: number
           fairways_possible?: number
+          go_live?: boolean
+          gps_only?: boolean
           greens_in_reg?: number
+          handicap_round?: boolean
+          hcp_allowance?: number
+          holes_combination?: string
           id?: string
+          join_token?: string
+          mode?: string
           notes?: string | null
+          owner_user_id?: string | null
           penalties?: number
           player_id?: string
+          scoring_format?: string
           started_at?: string
+          starts_at?: string | null
           status?: string
           tee_box?: string | null
           total_par?: number
@@ -314,7 +430,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      buddy_status: "pending" | "accepted" | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -441,6 +557,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      buddy_status: ["pending", "accepted", "blocked"],
+    },
   },
 } as const
