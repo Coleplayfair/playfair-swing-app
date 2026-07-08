@@ -263,19 +263,19 @@ export function RoundDetails({ roundId, onClose, onStart }: {
             {Array.from({ length: Math.max(0, 4 - players.length) }).map((_, i) => (
               <button key={`add-${i}`} className="rd-add-player" onClick={() => setShowAdd(true)}>
                 <div className="rd-add-plus">+</div>
-                <div className="rd-add-lbl">Add Player</div>
+                <div className="rd-add-lbl">Invite</div>
               </button>
             ))}
           </div>
         </div>
 
         <button className="rd-add-group">
-          <span className="rd-add-group-plus">+</span> Add Group
+          <span className="rd-add-group-plus">+</span> Split into another group
         </button>
       </div>
 
       <div className="rs-footer">
-        <button className="rs-cta" onClick={onStart}>Start Round</button>
+        <button className="rs-cta" onClick={onStart}>Play the first hole</button>
       </div>
 
       {showAdd && (
