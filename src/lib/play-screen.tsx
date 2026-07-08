@@ -57,23 +57,37 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse }: {
   onSearch: () => void; onHistory: () => void; onResume: (id: string) => void; onPickCourse: (c: any) => void;
 }) {
   const [rounds, setRounds] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [myCourses, setMyCourses] = useState<any[]>([]);
+  const [nearby, setNearby] = useState<any[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsDenied, setGpsDenied] = useState(false);
   const pid = getPlayerId();
 
   useEffect(() => {
     listRounds({ data: { playerId: pid } }).then((r) => setRounds(r.rounds)).catch(() => {});
-    listMyCourses({ data: { playerId: pid } }).then((r) => setCourses(r.courses)).catch(() => {});
+    listMyCourses({ data: { playerId: pid } }).then((r) => setMyCourses(r.courses)).catch(() => {});
   }, [pid]);
   useEffect(() => {
-    if (!("geolocation" in navigator)) return;
+    if (!("geolocation" in navigator)) { setGpsDenied(true); return; }
     navigator.geolocation.getCurrentPosition(
       (p) => setGps({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => {}
+      () => setGpsDenied(true),
+      { timeout: 8000, maximumAge: 60000 }
     );
   }, []);
+  useEffect(() => {
+    if (!gps) return;
+    setNearbyLoading(true);
+    nearbyCourses({ data: { lat: gps.lat, lng: gps.lng } })
+      .then((r) => setNearby(r.courses))
+      .catch(() => {})
+      .finally(() => setNearbyLoading(false));
+  }, [gps?.lat, gps?.lng]);
 
   const active = rounds.find((r) => r.status === "active");
+  const myIds = new Set(myCourses.map((c) => c.id));
+  const nearbyFiltered = nearby.filter((c) => !myIds.has(c.id));
 
   return (
     <>
@@ -99,18 +113,40 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse }: {
           </div>
         )}
 
-        {courses.length === 0 && (
+        {myCourses.length > 0 && (
+          <>
+            <div className="pf-section-label">Recently played</div>
+            <div className="pf-course-stack">
+              {myCourses.map((c) => (
+                <CourseCard key={c.id} course={c} gps={gps} onPlay={() => onPickCourse(c)} onPreview={() => onPickCourse(c)} synced />
+              ))}
+            </div>
+          </>
+        )}
+
+        {(nearbyFiltered.length > 0 || nearbyLoading || gpsDenied) && (
+          <>
+            <div className="pf-section-label">Nearby courses</div>
+            {nearbyLoading && nearbyFiltered.length === 0 && (
+              <div className="pf-note">Finding courses near you…</div>
+            )}
+            {gpsDenied && (
+              <div className="pf-note">Enable location to see courses near you.</div>
+            )}
+            <div className="pf-course-stack">
+              {nearbyFiltered.map((c) => (
+                <CourseCard key={c.id} course={c} gps={gps} onPlay={() => onPickCourse(c)} onPreview={() => onPickCourse(c)} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {myCourses.length === 0 && nearbyFiltered.length === 0 && !nearbyLoading && !gpsDenied && (
           <div className="pf-empty-state">
             <div className="pf-empty-title">No rounds yet</div>
             <div className="pf-empty-sub">Search for a course above to play your first round.</div>
           </div>
         )}
-
-        <div className="pf-course-stack">
-          {courses.map((c) => (
-            <CourseCard key={c.id} course={c} gps={gps} onPlay={() => onPickCourse(c)} onPreview={() => onPickCourse(c)} synced />
-          ))}
-        </div>
       </div>
     </>
   );
