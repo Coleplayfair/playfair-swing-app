@@ -97,6 +97,16 @@ function normalizeCourse(course: any, coords?: any) {
   };
 }
 
+function displayName(courseName: any, clubName: any): string {
+  const c = String(courseName || "").trim();
+  const club = String(clubName || "").trim();
+  // Provider often returns "18-hole course" / "9-hole course" as courseName.
+  if (!c || /^\d+[-\s]?hole\s+course$/i.test(c) || c.toLowerCase() === "course") {
+    return club || c || "Unknown course";
+  }
+  return c;
+}
+
 export const searchCourses = createServerFn({ method: "POST" })
   .inputValidator((d: { query: string }) => d)
   .handler(async ({ data }) => {
@@ -106,7 +116,7 @@ export const searchCourses = createServerFn({ method: "POST" })
     const list: any[] = raw?.courses ?? [];
     const courses = list.slice(0, 25).map((c: any) => ({
       id: String(c.courseID),
-      name: c.courseName || "Course",
+      name: displayName(c.courseName, c.clubName),
       club_name: c.clubName ?? null,
       city: c.city ?? null,
       country: c.country ?? null,
