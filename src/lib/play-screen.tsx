@@ -181,9 +181,18 @@ function CourseSearch({ onBack, onStarted }: { onBack: () => void; onStarted: (i
         {loading && <div style={{ padding: 16, color: "#888", fontSize: 13 }}>Searching…</div>}
         <div className="course-list">
           {results.map((c) => (
-            <div className="course-row" key={c.id} onClick={() => pick(c)}>
-              <div className="course-row-name">{c.name}</div>
-              <div className="course-row-sub">{[c.club_name, c.city, c.country].filter(Boolean).join(" · ")}</div>
+            <div className="course-row course-row-img" key={c.id} onClick={() => pick(c)}>
+              <img
+                className="course-thumb"
+                src={`/api/public/course-photo/${c.id}`}
+                alt=""
+                loading="lazy"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="course-row-name">{c.name}</div>
+                <div className="course-row-sub">{[c.club_name, c.city, c.country].filter(Boolean).join(" · ")}</div>
+              </div>
             </div>
           ))}
         </div>
