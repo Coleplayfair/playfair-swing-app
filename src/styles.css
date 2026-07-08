@@ -1,7 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
 
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#f0ede6;-webkit-font-smoothing:antialiased}
