@@ -976,23 +976,23 @@ function BottomNav({ active, onTab }: { active: NavTab; onTab: (s: Screen) => vo
     <div className="bottom-nav">
       <button className={"nav-item" + (active === "play" ? " active" : "")} onClick={() => onTab("play")}>
         <span className="nav-ico"><FlagIcon size={22} /></span>
-        <span className="nav-lbl">Play</span>
+        <span className="nav-lbl">Play On Course</span>
       </button>
       <button className={"nav-item" + (active === "performance" ? " active" : "")} onClick={() => onTab("performance")}>
         <span className="nav-ico"><PerfIcon size={22} /></span>
         <span className="nav-lbl">Performance</span>
       </button>
-      <button className={"nav-item" + (active === "book" ? " active" : "")} onClick={() => onTab("book")}>
+      <button className={"nav-item" + (active === "venue" ? " active" : "")} onClick={() => onTab("venue")}>
         <span className="nav-ico"><GolferIcon size={22} /></span>
-        <span className="nav-lbl">Book</span>
+        <span className="nav-lbl">Playfair Venue</span>
       </button>
       <button className={"nav-item" + (active === "bag" ? " active" : "")} onClick={() => onTab("bag")}>
         <span className="nav-ico"><GolfBagIcon size={22} /></span>
         <span className="nav-lbl">My Bag</span>
       </button>
-      <button className={"nav-item" + (active === "profile" ? " active" : "")} onClick={() => onTab("profile")}>
+      <button className={"nav-item" + (active === "me" ? " active" : "")} onClick={() => onTab("me")}>
         <span className="nav-ico"><ProfileIcon size={22} /></span>
-        <span className="nav-lbl">Profile</span>
+        <span className="nav-lbl">Me</span>
       </button>
     </div>
   );
