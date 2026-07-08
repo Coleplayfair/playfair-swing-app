@@ -28,6 +28,19 @@ function requestCurrentLocation(onSuccess: (gps: LatLng) => void, onError?: (mes
   );
 }
 
+function ComingSoonModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="venue-tip-overlay" onClick={onClose}>
+      <div className="venue-tip-card" onClick={(e) => e.stopPropagation()}>
+        <button className="venue-tip-close" onClick={onClose}>✕</button>
+        <div className="venue-tip-title">Coming Soon</div>
+        <div className="venue-tip-body">Coming soon to the Playfair app.</div>
+        <button className="venue-tip-btn" onClick={onClose}>Got it</button>
+      </div>
+    </div>
+  );
+}
+
 /* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
 export function PlayScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNode; onBookBay?: () => void }) {
   const [view, setView] = useState<PlayView>("home");
@@ -103,6 +116,7 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsDenied, setGpsDenied] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const pid = getPlayerId();
 
   useEffect(() => {
@@ -140,7 +154,7 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
         </button>
       </div>
 
-      <div className="pf-play-body">
+      <div className="pf-play-body" onClick={() => setShowComingSoon(true)}>
         <button className="pf-search-pill" onClick={onSearch}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <span>Search all courses</span>
@@ -190,17 +204,18 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
         )}
 
         {onBookBay && (
-          <>
+          <div data-allow-click="true">
             <div className="pf-section-label" style={{ marginTop: 24 }}>Playfair Venue</div>
-            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
-              Book Indoor Bay →
+            <button className="pf-btn-play pf-btn-play-full" onClick={(e) => { e.stopPropagation(); onBookBay(); }}>
+              Book a Bay at a Playfair Venue →
             </button>
             <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
               On-course GPS scoring is coming soon.
             </div>
-          </>
+          </div>
         )}
       </div>
+      {showComingSoon && <ComingSoonModal onClose={() => setShowComingSoon(false)} />}
     </>
   );
 }
@@ -675,6 +690,7 @@ export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.R
   const pid = getPlayerId();
   const [rounds, setRounds] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   useEffect(() => {
     listRounds({ data: { playerId: pid } }).then((r) => setRounds(r.rounds));
     getUserStats({ data: { playerId: pid } }).then(setStats);
@@ -694,7 +710,7 @@ export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.R
         <span className="pf-play-header-title">Performance</span>
         <span style={{ width: 34 }} />
       </div>
-      <div className="pf-play-body pf-perf-body">
+      <div className="pf-play-body pf-perf-body" onClick={() => setShowComingSoon(true)}>
         {/* Rounds card */}
         <div className="pf-perf-card">
           <div className="pf-perf-card-hdr">
@@ -751,16 +767,17 @@ export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.R
         </div>
 
         {onBookBay && (
-          <>
-            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
-              Book Indoor Bay →
+          <div data-allow-click="true">
+            <button className="pf-btn-play pf-btn-play-full" onClick={(e) => { e.stopPropagation(); onBookBay(); }}>
+              Book a Bay at a Playfair Venue →
             </button>
             <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
               Advanced stats and insights are coming soon.
             </div>
-          </>
+          </div>
         )}
       </div>
+      {showComingSoon && <ComingSoonModal onClose={() => setShowComingSoon(false)} />}
       {bottomNav}
     </div>
   );
