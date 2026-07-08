@@ -1,35 +1,42 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   searchCourses, getCourse, startRound, getRound, updateHole,
-  finishRound, listRounds, getUserStats, deleteRound,
+  finishRound, listRounds, getUserStats, deleteRound, listMyCourses,
 } from "@/lib/rounds.functions";
 import { distanceYards, getPlayerId } from "@/lib/gps";
 import markWhite from "@/assets/pf-mark-white.png.asset.json";
+import coursePlaceholder from "@/assets/course-placeholder.jpg";
 
-type PlayView = "home" | "search" | "round" | "history" | "stats" | "summary";
+type PlayView = "home" | "search" | "round" | "history" | "summary" | "tee-picker";
 
+/* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
 export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
   const [view, setView] = useState<PlayView>("home");
   const [activeRoundId, setActiveRoundId] = useState<string | null>(null);
+  const [pickCourse, setPickCourse] = useState<any | null>(null);
 
   const openRound = (id: string) => { setActiveRoundId(id); setView("round"); };
   const showSummary = (id: string) => { setActiveRoundId(id); setView("summary"); };
+  const startFromCourse = (c: any) => { setPickCourse(c); setView("tee-picker"); };
 
   return (
     <div className="screen">
       {view === "home" && (
         <PlayHome
-          onStart={() => setView("search")}
+          onSearch={() => setView("search")}
           onHistory={() => setView("history")}
-          onStats={() => setView("stats")}
           onResume={openRound}
+          onPickCourse={startFromCourse}
         />
       )}
       {view === "search" && (
-        <CourseSearch onBack={() => setView("home")} onStarted={openRound} />
+        <CourseSearch onBack={() => setView("home")} onPick={startFromCourse} />
+      )}
+      {view === "tee-picker" && pickCourse && (
+        <TeePicker course={pickCourse} onBack={() => setView("home")} onStarted={openRound} />
       )}
       {view === "round" && activeRoundId && (
         <ActiveRound roundId={activeRoundId} onExit={() => setView("home")} onFinish={() => showSummary(activeRoundId)} />
@@ -40,96 +47,127 @@ export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
       {view === "history" && (
         <History onBack={() => setView("home")} onOpen={showSummary} />
       )}
-      {view === "stats" && (
-        <Stats onBack={() => setView("home")} />
-      )}
-      {(view === "home" || view === "history" || view === "stats") && bottomNav}
+      {(view === "home" || view === "history") && bottomNav}
     </div>
   );
 }
 
-/* ── HOME ── */
-function PlayHome({ onStart, onHistory, onStats, onResume }: {
-  onStart: () => void; onHistory: () => void; onStats: () => void; onResume: (id: string) => void;
+/* ─────── HOME ─────── */
+function PlayHome({ onSearch, onHistory, onResume, onPickCourse }: {
+  onSearch: () => void; onHistory: () => void; onResume: (id: string) => void; onPickCourse: (c: any) => void;
 }) {
   const [rounds, setRounds] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const pid = getPlayerId();
+
   useEffect(() => {
     listRounds({ data: { playerId: pid } }).then((r) => setRounds(r.rounds)).catch(() => {});
-    getUserStats({ data: { playerId: pid } }).then(setStats).catch(() => {});
+    listMyCourses({ data: { playerId: pid } }).then((r) => setCourses(r.courses)).catch(() => {});
   }, [pid]);
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (p) => setGps({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => {}
+    );
+  }, []);
+
   const active = rounds.find((r) => r.status === "active");
-  const recent = rounds.filter((r) => r.status === "completed").slice(0, 3);
+
   return (
     <>
-      <div className="top-bar">
-        <img src={markWhite.url} alt="" className="top-bar-mark" />
-        <span className="top-bar-title">Play</span>
-        <span style={{ width: 22 }} />
+      <div className="pf-play-header">
+        <img src={markWhite.url} alt="Playfair" className="pf-play-header-mark" />
+        <span className="pf-play-header-title">Play</span>
+        <button className="pf-play-header-btn" onClick={onHistory} aria-label="History">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
       </div>
-      <div className="play-body">
-        <div className="play-hero">
-          <div className="play-hero-title">Track your round</div>
-          <div className="play-hero-sub">GPS distances, live scoring, stats.</div>
-          <button className="btn-green" onClick={onStart} style={{ marginTop: 16 }}>Start a Round →</button>
-        </div>
+
+      <div className="pf-play-body">
+        <button className="pf-search-pill" onClick={onSearch}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span>Search all courses</span>
+        </button>
 
         {active && (
-          <div className="play-card" onClick={() => onResume(active.id)} style={{ cursor: "pointer" }}>
-            <div className="play-card-lbl">In progress</div>
-            <div className="play-card-title">{active.course_name}</div>
-            <div className="play-card-sub">Resume round →</div>
+          <div className="pf-active-banner" onClick={() => onResume(active.id)}>
+            <div className="pf-active-lbl">Round in progress</div>
+            <div className="pf-active-title">{active.course_name}</div>
+            <div className="pf-active-cta">Resume round →</div>
           </div>
         )}
 
-        {stats && stats.count > 0 && (
-          <div className="stats-strip">
-            <div><div className="stat-n">{stats.count}</div><div className="stat-l">Rounds</div></div>
-            <div><div className="stat-n">{stats.avg_score ?? "—"}</div><div className="stat-l">Avg score</div></div>
-            <div><div className="stat-n">{stats.gir_pct ?? "—"}%</div><div className="stat-l">GIR</div></div>
+        {courses.length === 0 && (
+          <div className="pf-empty-state">
+            <div className="pf-empty-title">No rounds yet</div>
+            <div className="pf-empty-sub">Search for a course above to play your first round.</div>
           </div>
         )}
 
-        <div className="play-actions">
-          <button className="play-action" onClick={onHistory}>History</button>
-          <button className="play-action" onClick={onStats}>Stats</button>
+        <div className="pf-course-stack">
+          {courses.map((c) => (
+            <CourseCard key={c.id} course={c} gps={gps} onPlay={() => onPickCourse(c)} onPreview={() => onPickCourse(c)} synced />
+          ))}
         </div>
-
-        {recent.length > 0 && (
-          <>
-            <div className="section-lbl">Recent rounds</div>
-            <div className="round-list">
-              {recent.map((r) => (
-                <div className="round-row" key={r.id}>
-                  <div>
-                    <div className="round-row-name">{r.course_name}</div>
-                    <div className="round-row-date">{new Date(r.ended_at || r.started_at).toLocaleDateString()}</div>
-                  </div>
-                  <div className="round-score">
-                    <b>{r.total_score}</b>
-                    <span>{r.total_score - r.total_par >= 0 ? `+${r.total_score - r.total_par}` : r.total_score - r.total_par}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
       </div>
     </>
   );
 }
 
-/* ── COURSE SEARCH ── */
-function CourseSearch({ onBack, onStarted }: { onBack: () => void; onStarted: (id: string) => void }) {
+/* Big Playfair course card */
+function CourseCard({ course, gps, onPlay, onPreview, synced }: {
+  course: any; gps: { lat: number; lng: number } | null; onPlay: () => void; onPreview: () => void; synced?: boolean;
+}) {
+  const distKm = gps && course.latitude && course.longitude
+    ? Math.round(haversineKm(gps.lat, gps.lng, course.latitude, course.longitude))
+    : null;
+  const location = [course.city, course.region || course.country].filter(Boolean).join(", ");
+  const photoSrc = `/api/public/course-photo/${course.id}?name=${encodeURIComponent([course.name, course.club_name].filter(Boolean).join(" "))}`;
+  return (
+    <div className="pf-course-card">
+      <img
+        className="pf-course-img"
+        src={photoSrc}
+        alt=""
+        loading="lazy"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).src = coursePlaceholder; }}
+      />
+      <div className="pf-course-scrim" />
+      {synced && <span className="pf-course-badge">✓ SYNCED</span>}
+      <div className="pf-course-content">
+        <div className="pf-course-name">{course.name}</div>
+        {location && <div className="pf-course-loc">{location}</div>}
+        {distKm != null && <div className="pf-course-dist">{distKm} km</div>}
+        <div className="pf-course-actions">
+          <button className="pf-btn-preview" onClick={onPreview}>PREVIEW</button>
+          <button className="pf-btn-play" onClick={onPlay}>PLAY GOLF</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/* ─────── SEARCH ─────── */
+function CourseSearch({ onBack, onPick }: { onBack: () => void; onPick: (c: any) => void }) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<any | null>(null);
-  const [course, setCourse] = useState<any | null>(null);
-  const [tee, setTee] = useState<string>("");
-  const [starting, setStarting] = useState(false);
-  const pid = getPlayerId();
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition((p) => setGps({ lat: p.coords.latitude, lng: p.coords.longitude }), () => {});
+  }, []);
 
   const run = async () => {
     if (q.trim().length < 2) return;
@@ -141,95 +179,103 @@ function CourseSearch({ onBack, onStarted }: { onBack: () => void; onStarted: (i
     setLoading(false);
   };
 
-  const pick = async (c: any) => {
-    setSelected(c);
-    setCourse(null);
-    try {
-      const full = await getCourse({ data: { courseId: c.id } });
-      setCourse(full);
-      setTee(((full.tee_boxes as any[]) ?? [])[0]?.tee_name || "");
-    } catch (e: any) { alert(e.message); setSelected(null); }
-  };
+  return (
+    <>
+      <div className="pf-play-header">
+        <button className="pf-play-header-btn" onClick={onBack} aria-label="Back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <span className="pf-play-header-title">Find a course</span>
+        <span style={{ width: 34 }} />
+      </div>
+
+      <div className="pf-play-body">
+        <div className="pf-search-bar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input
+            autoFocus
+            placeholder="Search all courses"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && run()}
+          />
+          {q && <button className="pf-search-clear" onClick={() => { setQ(""); setResults([]); }}>✕</button>}
+        </div>
+
+        {loading && <div className="pf-note">Searching…</div>}
+
+        <div className="pf-course-stack">
+          {results.map((c) => (
+            <CourseCard key={c.id} course={c} gps={gps} onPlay={() => onPick(c)} onPreview={() => onPick(c)} />
+          ))}
+        </div>
+        {!loading && q.length >= 2 && results.length === 0 && (
+          <div className="pf-note">No courses found.</div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ─────── TEE PICKER (sheet) ─────── */
+function TeePicker({ course, onBack, onStarted }: { course: any; onBack: () => void; onStarted: (id: string) => void }) {
+  const [full, setFull] = useState<any | null>(null);
+  const [tee, setTee] = useState<string>("");
+  const [starting, setStarting] = useState(false);
+  const pid = getPlayerId();
+
+  useEffect(() => {
+    getCourse({ data: { courseId: course.id } })
+      .then((f) => { setFull(f); setTee(((f.tee_boxes as any[]) ?? [])[0]?.tee_name || ""); })
+      .catch((e) => alert(e.message));
+  }, [course.id]);
 
   const start = async () => {
-    if (!course) return;
+    if (!full) return;
     setStarting(true);
     try {
-      const r = await startRound({ data: { playerId: pid, courseId: course.id, teeBox: tee } });
+      const r = await startRound({ data: { playerId: pid, courseId: full.id, teeBox: tee } });
       onStarted(r.round_id);
     } catch (e: any) { alert(e.message); setStarting(false); }
   };
 
   return (
     <>
-      <div className="top-bar">
-        <button className="back-btn" onClick={onBack}>← Back</button>
-        <span className="top-bar-title">Find a course</span>
-        <span style={{ width: 50 }} />
+      <div className="pf-play-header">
+        <button className="pf-play-header-btn" onClick={onBack} aria-label="Back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <span className="pf-play-header-title">Start round</span>
+        <span style={{ width: 34 }} />
       </div>
-      <div className="play-body">
-        <div className="search-row">
-          <input
-            className="search-input"
-            placeholder="Search courses…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && run()}
-          />
-          <button className="search-btn" onClick={run}>Go</button>
+      <div className="pf-play-body">
+        <div className="pf-tee-hero">
+          <div className="pf-tee-name">{course.name}</div>
+          <div className="pf-tee-loc">{[course.club_name, course.city, course.country].filter(Boolean).join(" · ")}</div>
         </div>
-        {loading && <div style={{ padding: 16, color: "#888", fontSize: 13 }}>Searching…</div>}
-        <div className="course-list">
-          {results.map((c) => (
-            <div className="course-row course-row-img" key={c.id} onClick={() => pick(c)}>
-              <img
-                className="course-thumb"
-                src={`/api/public/course-photo/${c.id}?name=${encodeURIComponent([c.name, c.club_name].filter(Boolean).join(" "))}`}
-                alt=""
-                loading="lazy"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="course-row-name">{c.name}</div>
-                <div className="course-row-sub">{[c.club_name, c.city, c.country].filter(Boolean).join(" · ")}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {!full ? (
+          <div className="pf-note">Loading course…</div>
+        ) : (
+          <>
+            <label className="pf-tee-label">Tee box</label>
+            <select className="pf-tee-select" value={tee} onChange={(e) => setTee(e.target.value)}>
+              {(full.tee_boxes as any[]).map((t: any) => (
+                <option key={t.tee_name} value={t.tee_name}>
+                  {t.tee_name}{t.par_total ? ` · Par ${t.par_total}` : ""}{t.total_yards ? ` · ${t.total_yards}y` : ""}
+                </option>
+              ))}
+            </select>
+            <button className="pf-btn-play pf-btn-play-full" onClick={start} disabled={starting}>
+              {starting ? "STARTING…" : "PLAY GOLF"}
+            </button>
+          </>
+        )}
       </div>
-      {selected && (
-        <div className="venue-tip-overlay" onClick={() => !starting && setSelected(null)}>
-          <div className="venue-tip-card" onClick={(e) => e.stopPropagation()}>
-            <div className="venue-tip-title">{selected.name}</div>
-            <div className="venue-tip-body" style={{ marginBottom: 16 }}>
-              {[selected.club_name, selected.city, selected.country].filter(Boolean).join(" · ")}
-            </div>
-            {!course ? (
-              <div style={{ fontSize: 13, color: "#888", padding: "10px 0" }}>Loading course…</div>
-            ) : (
-              <>
-                <label style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em" }}>Tee box</label>
-                <select className="tee-select" value={tee} onChange={(e) => setTee(e.target.value)}>
-                  {(course.tee_boxes as any[]).map((t: any) => (
-                    <option key={t.tee_name} value={t.tee_name}>
-                      {t.tee_name}{t.par_total ? ` · Par ${t.par_total}` : ""}{t.total_yards ? ` · ${t.total_yards}y` : ""}
-                    </option>
-                  ))}
-                </select>
-                <button className="btn-green" onClick={start} disabled={starting} style={{ marginTop: 14 }}>
-                  {starting ? "Starting…" : "Start round →"}
-                </button>
-              </>
-            )}
-            <button className="venue-tip-close" onClick={() => !starting && setSelected(null)}>✕</button>
-          </div>
-        </div>
-      )}
     </>
   );
 }
 
-/* ── ACTIVE ROUND ── */
+/* ═════════════════════════════════════════════ ACTIVE ROUND ═════════════════════════════════════════════ */
 function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: () => void; onFinish: () => void }) {
   const pid = getPlayerId();
   const [data, setData] = useState<any>(null);
@@ -255,7 +301,6 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
   const holes = data.holes;
   const hole = holes[holeIdx];
   const teeData = (data.course?.tee_boxes as any[])?.find((t) => t.tee_name === data.round.tee_box) || (data.course?.tee_boxes as any[])?.[0];
-  // Coordinates from raw API if present
   const holeCoords = teeData?.holes?.[holeIdx] || {};
   const green = holeCoords.green || holeCoords.green_center ? { front: holeCoords.green_front, center: holeCoords.green_center, back: holeCoords.green_back } : null;
 
@@ -382,7 +427,7 @@ function Stepper({ label, value, onChange, min = 1, max = 15, par }: { label: st
   );
 }
 
-/* ── MAP ── */
+/* ─────── MAP ─────── */
 function HoleMap({ gps, green }: { gps: { lat: number; lng: number } | null; green: any }) {
   const center = green?.center ? [green.center.latitude, green.center.longitude] as [number, number]
     : gps ? [gps.lat, gps.lng] as [number, number]
@@ -412,24 +457,21 @@ function Recenter({ center }: { center: [number, number] }) {
   return null;
 }
 
-/* ── SUMMARY ── */
+/* ─────── SUMMARY ─────── */
 function RoundSummary({ roundId, onDone }: { roundId: string; onDone: () => void }) {
   const pid = getPlayerId();
   const [data, setData] = useState<any>(null);
   useEffect(() => { getRound({ data: { playerId: pid, roundId } }).then(setData); }, [pid, roundId]);
   if (!data) return <div style={{ padding: 24 }}>Loading…</div>;
-  const front = data.holes.slice(0, 9), back = data.holes.slice(9, 18);
-  const fSum = front.reduce((s: number, h: any) => s + (h.score || 0), 0);
-  const bSum = back.reduce((s: number, h: any) => s + (h.score || 0), 0);
   const diff = data.round.total_score - data.round.total_par;
   return (
     <>
-      <div className="top-bar">
-        <span style={{ width: 50 }} />
-        <span className="top-bar-title">Round summary</span>
-        <span style={{ width: 50 }} />
+      <div className="pf-play-header">
+        <span style={{ width: 34 }} />
+        <span className="pf-play-header-title">Round summary</span>
+        <span style={{ width: 34 }} />
       </div>
-      <div className="play-body">
+      <div className="pf-play-body">
         <div className="summary-hero">
           <div style={{ fontSize: 11, color: "#888", letterSpacing: "0.1em", textTransform: "uppercase" }}>{data.round.course_name}</div>
           <div className="summary-score">{data.round.total_score}</div>
@@ -441,7 +483,7 @@ function RoundSummary({ roundId, onDone }: { roundId: string; onDone: () => void
           <div><div className="stat-n">{Math.round((data.round.greens_in_reg / 18) * 100)}%</div><div className="stat-l">GIR</div></div>
         </div>
         <ScorecardGrid holes={data.holes} />
-        <button className="btn-green" onClick={onDone} style={{ marginTop: 20 }}>Done</button>
+        <button className="pf-btn-play pf-btn-play-full" onClick={onDone} style={{ marginTop: 20 }}>DONE</button>
       </div>
     </>
   );
@@ -477,7 +519,7 @@ function ScorecardGrid({ holes }: { holes: any[] }) {
   );
 }
 
-/* ── HISTORY ── */
+/* ─────── HISTORY ─────── */
 function History({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) => void }) {
   const pid = getPlayerId();
   const [rounds, setRounds] = useState<any[]>([]);
@@ -486,13 +528,15 @@ function History({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) 
   const del = async (id: string) => { if (confirm("Delete this round?")) { await deleteRound({ data: { playerId: pid, roundId: id } }); load(); } };
   return (
     <>
-      <div className="top-bar">
-        <button className="back-btn" onClick={onBack}>← Back</button>
-        <span className="top-bar-title">History</span>
-        <span style={{ width: 50 }} />
+      <div className="pf-play-header">
+        <button className="pf-play-header-btn" onClick={onBack}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <span className="pf-play-header-title">History</span>
+        <span style={{ width: 34 }} />
       </div>
-      <div className="play-body">
-        {rounds.length === 0 && <div style={{ padding: 20, color: "#888", fontSize: 13 }}>No rounds yet.</div>}
+      <div className="pf-play-body">
+        {rounds.length === 0 && <div className="pf-note">No rounds yet.</div>}
         <div className="round-list">
           {rounds.map((r) => {
             const d = r.total_score - r.total_par;
@@ -516,57 +560,111 @@ function History({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) 
   );
 }
 
-/* ── STATS ── */
-function Stats({ onBack }: { onBack: () => void }) {
+/* ═════════════════════════════════════════════ PERFORMANCE ═════════════════════════════════════════════ */
+export function PerformanceScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
   const pid = getPlayerId();
-  const [s, setS] = useState<any>(null);
-  useEffect(() => { getUserStats({ data: { playerId: pid } }).then(setS); }, []);
+  const [rounds, setRounds] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  useEffect(() => {
+    listRounds({ data: { playerId: pid } }).then((r) => setRounds(r.rounds));
+    getUserStats({ data: { playerId: pid } }).then(setStats);
+  }, [pid]);
+
+  const completed = rounds.filter((r) => r.status === "completed");
+  const latest = completed[0];
+  // Handicap approx = average (score - par) of last 8
+  const last8 = completed.slice(0, 8);
+  const hcp = last8.length ? (last8.reduce((s, r) => s + (r.total_score - r.total_par), 0) / last8.length) : null;
+  const trendPts = completed.slice(0, 10).reverse().map((r) => r.total_score - r.total_par);
+
   return (
-    <>
-      <div className="top-bar">
-        <button className="back-btn" onClick={onBack}>← Back</button>
-        <span className="top-bar-title">Stats</span>
-        <span style={{ width: 50 }} />
+    <div className="screen">
+      <div className="pf-play-header">
+        <img src={markWhite.url} alt="Playfair" className="pf-play-header-mark" />
+        <span className="pf-play-header-title">Performance</span>
+        <span style={{ width: 34 }} />
       </div>
-      <div className="play-body">
-        {!s || s.count === 0 ? (
-          <div style={{ padding: 20, color: "#888", fontSize: 13 }}>Play a round to see stats.</div>
-        ) : (
-          <>
-            <div className="stats-grid">
-              <div className="stats-cell"><div className="stat-n">{s.count}</div><div className="stat-l">Rounds</div></div>
-              <div className="stats-cell"><div className="stat-n">{s.avg_score ?? "—"}</div><div className="stat-l">Avg score</div></div>
-              <div className="stats-cell"><div className="stat-n">{s.avg_putts ?? "—"}</div><div className="stat-l">Avg putts</div></div>
-              <div className="stats-cell"><div className="stat-n">{s.fir_pct ?? "—"}%</div><div className="stat-l">Fairways</div></div>
-              <div className="stats-cell"><div className="stat-n">{s.gir_pct ?? "—"}%</div><div className="stat-l">GIR</div></div>
-              <div className="stats-cell">
-                <div className="stat-n">{s.best ? `${s.best.total_score - s.best.total_par >= 0 ? "+" : ""}${s.best.total_score - s.best.total_par}` : "—"}</div>
-                <div className="stat-l">Best round</div>
+      <div className="pf-play-body pf-perf-body">
+        {/* Rounds card */}
+        <div className="pf-perf-card">
+          <div className="pf-perf-card-hdr">
+            <span className="pf-perf-hdr-lbl">Rounds</span>
+            <span className="pf-perf-hdr-r">{completed.length} <span className="pf-perf-chev">›</span></span>
+          </div>
+          {latest ? (
+            <div className="pf-perf-latest">
+              <div className="pf-perf-date">{new Date(latest.ended_at || latest.started_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }).toUpperCase()}</div>
+              <div className="pf-perf-row">
+                <div>
+                  <div className="pf-perf-course">{latest.course_name}</div>
+                  <div className="pf-perf-sub">18 HOLES  PAR: {latest.total_par}</div>
+                  {latest.tee_box && <div className="pf-perf-tee">{latest.tee_box.toUpperCase()}</div>}
+                </div>
+                <div className="pf-perf-score">
+                  <b>{latest.total_score}</b>
+                  <sup>{latest.total_score - latest.total_par >= 0 ? `+${latest.total_score - latest.total_par}` : latest.total_score - latest.total_par}</sup>
+                </div>
               </div>
             </div>
-            {s.last10?.length > 1 && <TrendLine data={s.last10} />}
-          </>
-        )}
+          ) : (
+            <div className="pf-perf-empty">No completed rounds yet.</div>
+          )}
+        </div>
+
+        {/* Handicap + Scoring twin cards */}
+        <div className="pf-perf-pair">
+          <div className="pf-perf-card pf-perf-mini">
+            <div className="pf-perf-mini-hdr">Handicap <span className="pf-perf-chev">›</span></div>
+            <div className="pf-perf-mini-n">{hcp != null ? (hcp >= 0 ? `+${hcp.toFixed(1)}` : hcp.toFixed(1)) : "—"}</div>
+            <Sparkline pts={trendPts} />
+          </div>
+          <div className="pf-perf-card pf-perf-mini">
+            <div className="pf-perf-mini-hdr">Scoring <span className="pf-perf-chev">›</span></div>
+            <div className="pf-perf-mini-n">{stats?.avg_score != null ? stats.avg_score : "—"}</div>
+            <Sparkline pts={completed.slice(0, 10).reverse().map((r) => r.total_score)} />
+          </div>
+        </div>
+
+        {/* Broken-down block */}
+        <div className="pf-perf-card">
+          <div className="pf-perf-card-hdr">
+            <span className="pf-perf-hdr-lbl">Your game, broken down</span>
+            <span className="pf-perf-chev">›</span>
+          </div>
+          <div className="pf-perf-sub" style={{ marginTop: 2 }}>Averaged across your last {Math.min(completed.length, 9)} rounds</div>
+          <div className="pf-perf-metrics">
+            <PerfMetric label="Avg putts" value={stats?.avg_putts ?? "—"} />
+            <PerfMetric label="Fairways" value={stats?.fir_pct != null ? `${stats.fir_pct}%` : "—"} />
+            <PerfMetric label="GIR" value={stats?.gir_pct != null ? `${stats.gir_pct}%` : "—"} />
+            <PerfMetric label="Best" value={stats?.best ? (stats.best.total_score - stats.best.total_par >= 0 ? `+${stats.best.total_score - stats.best.total_par}` : `${stats.best.total_score - stats.best.total_par}`) : "—"} />
+          </div>
+        </div>
       </div>
-    </>
+      {bottomNav}
+    </div>
   );
 }
 
-function TrendLine({ data }: { data: any[] }) {
-  const pts = data.map((d) => d.score - d.par);
-  const min = Math.min(...pts, 0), max = Math.max(...pts, 5);
-  const w = 300, h = 100, pad = 10;
-  const x = (i: number) => pad + (i * (w - pad * 2)) / Math.max(1, pts.length - 1);
-  const y = (v: number) => h - pad - ((v - min) / Math.max(1, max - min)) * (h - pad * 2);
-  const path = pts.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+function PerfMetric({ label, value }: { label: string; value: any }) {
   return (
-    <div style={{ marginTop: 24 }}>
-      <div className="section-lbl">Last {pts.length} rounds vs par</div>
-      <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: 110, background: "#f7f5ef" }}>
-        <line x1={pad} x2={w - pad} y1={y(0)} y2={y(0)} stroke="#ccc" strokeDasharray="3 3" />
-        <path d={path} fill="none" stroke="#094811" strokeWidth="2" />
-        {pts.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r="3" fill="#094811" />)}
-      </svg>
+    <div className="pf-perf-metric">
+      <div className="pf-perf-metric-n">{value}</div>
+      <div className="pf-perf-metric-l">{label}</div>
     </div>
+  );
+}
+
+function Sparkline({ pts }: { pts: number[] }) {
+  if (!pts || pts.length < 2) return <div className="pf-spark pf-spark-empty" />;
+  const w = 200, h = 40, pad = 4;
+  const min = Math.min(...pts), max = Math.max(...pts);
+  const range = max - min || 1;
+  const x = (i: number) => pad + (i * (w - pad * 2)) / (pts.length - 1);
+  const y = (v: number) => h - pad - ((v - min) / range) * (h - pad * 2);
+  const d = pts.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  return (
+    <svg className="pf-spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+      <path d={d} fill="none" stroke="#094811" strokeWidth="1.5" opacity="0.5" />
+    </svg>
   );
 }

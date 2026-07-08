@@ -229,5 +229,82 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .stats-cell{padding:16px;border:1px solid #eee;text-align:center;border-radius:2px;background:#fbfaf6}
 
-/* 4-column bottom nav (was 3) */
-.bottom-nav{display:grid !important;grid-template-columns:1fr 1fr 1fr 1fr !important}
+/* 5-column bottom nav */
+.bottom-nav{display:grid !important;grid-template-columns:repeat(5,1fr) !important}
+.bottom-nav .nav-lbl{font-size:10px}
+
+/* ═════════ PLAY (Hole19-style, Playfair colors) ═════════ */
+.pf-play-header{display:flex;align-items:center;justify-content:space-between;padding:44px 16px 12px;background:#094811;color:#EDE9DF}
+.pf-play-header-mark{height:22px;width:auto}
+.pf-play-header-title{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:18px;font-weight:700;color:#EDE9DF}
+.pf-play-header-btn{background:transparent;border:none;color:#EDE9DF;padding:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pf-play-body{flex:1;padding:14px 14px 100px;overflow-y:auto;background:#f4f1ea}
+
+.pf-search-pill,.pf-search-bar{display:flex;align-items:center;gap:10px;background:#fff;border-radius:14px;padding:14px 16px;color:#666;box-shadow:0 1px 2px rgba(0,0,0,0.04);margin-bottom:14px;border:none;width:100%;font-family:inherit;font-size:14px;cursor:pointer}
+.pf-search-pill{color:#888}
+.pf-search-bar input{flex:1;border:none;outline:none;background:transparent;font-size:14px;font-family:inherit;color:#111}
+.pf-search-clear{background:none;border:none;color:#888;cursor:pointer;font-size:16px;padding:0 4px}
+
+.pf-active-banner{background:linear-gradient(135deg,#094811,#0b5c17);color:#EDE9DF;padding:16px 18px;border-radius:14px;margin-bottom:14px;cursor:pointer;box-shadow:0 4px 12px rgba(9,72,17,0.25)}
+.pf-active-lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;font-weight:600}
+.pf-active-title{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:18px;margin-top:4px}
+.pf-active-cta{font-size:12px;margin-top:8px;opacity:.9;font-weight:500}
+
+.pf-empty-state{text-align:center;padding:40px 20px;color:#888}
+.pf-empty-title{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:16px;color:#094811;margin-bottom:6px}
+.pf-empty-sub{font-size:13px}
+
+.pf-note{padding:20px;color:#888;font-size:13px;text-align:center}
+
+.pf-course-stack{display:flex;flex-direction:column;gap:16px}
+.pf-course-card{position:relative;border-radius:14px;overflow:hidden;background:#EDE9DF;aspect-ratio:16/13;box-shadow:0 4px 14px rgba(0,0,0,0.08)}
+.pf-course-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.pf-course-scrim{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.15) 40%,rgba(0,0,0,0.75) 100%)}
+.pf-course-badge{position:absolute;top:12px;right:12px;background:#EDE9DF;color:#094811;padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.08em;z-index:2}
+.pf-course-content{position:absolute;left:16px;right:16px;bottom:14px;color:#EDE9DF;z-index:2}
+.pf-course-name{font-family:'Libre Baskerville',Georgia,serif;font-weight:700;font-size:22px;line-height:1.15;text-shadow:0 2px 6px rgba(0,0,0,0.5)}
+.pf-course-loc{font-size:13px;opacity:.95;margin-top:4px;text-shadow:0 1px 3px rgba(0,0,0,0.5)}
+.pf-course-dist{font-size:13px;opacity:.85;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,0.5)}
+.pf-course-actions{display:flex;gap:8px;margin-top:12px}
+.pf-btn-preview{flex:0 0 auto;padding:12px 18px;background:rgba(20,20,20,0.72);color:#EDE9DF;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:12px;letter-spacing:.1em;cursor:pointer;backdrop-filter:blur(4px)}
+.pf-btn-play{flex:1;padding:12px 18px;background:#094811;color:#EDE9DF;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:12px;letter-spacing:.1em;cursor:pointer;box-shadow:0 2px 6px rgba(9,72,17,0.35)}
+.pf-btn-play:hover{background:#0b5c17}
+.pf-btn-play-full{width:100%;margin-top:16px;padding:16px}
+.pf-btn-play:disabled{opacity:.6;cursor:default}
+
+/* Tee picker */
+.pf-tee-hero{background:#094811;color:#EDE9DF;padding:20px;border-radius:14px;margin-bottom:16px}
+.pf-tee-name{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:20px;font-weight:700}
+.pf-tee-loc{font-size:13px;opacity:.8;margin-top:4px}
+.pf-tee-label{display:block;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;font-weight:600}
+.pf-tee-select{width:100%;padding:14px 16px;border:1px solid #d9d4c7;border-radius:10px;background:#fff;font-family:inherit;font-size:14px;color:#111}
+
+/* ═════════ PERFORMANCE ═════════ */
+.pf-perf-body{background:#f4f1ea;padding:16px 14px 100px;display:flex;flex-direction:column;gap:12px}
+.pf-perf-card{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.pf-perf-card-hdr{display:flex;align-items:center;justify-content:space-between;font-size:14px;color:#111;font-weight:600}
+.pf-perf-hdr-lbl{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:16px;color:#094811;font-weight:700}
+.pf-perf-hdr-r{color:#666;font-size:13px;font-weight:500}
+.pf-perf-chev{color:#094811;margin-left:6px;font-size:16px}
+.pf-perf-latest{margin-top:14px;padding-top:14px;border-top:1px solid #f0ede4}
+.pf-perf-date{font-size:11px;color:#999;letter-spacing:.08em;font-weight:600;margin-bottom:6px}
+.pf-perf-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.pf-perf-course{font-size:15px;font-weight:600;color:#111;line-height:1.3}
+.pf-perf-sub{font-size:11px;color:#999;margin-top:4px;letter-spacing:.05em;text-transform:uppercase}
+.pf-perf-tee{display:inline-block;margin-top:8px;padding:3px 8px;background:#EDE9DF;color:#094811;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.08em}
+.pf-perf-score{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;color:#094811;line-height:1;white-space:nowrap}
+.pf-perf-score b{font-size:38px;font-weight:700}
+.pf-perf-score sup{font-size:14px;font-weight:600;margin-left:2px;opacity:.7;vertical-align:super}
+.pf-perf-empty{margin-top:14px;color:#888;font-size:13px}
+
+.pf-perf-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pf-perf-mini{padding:16px 18px 12px;min-height:140px;display:flex;flex-direction:column}
+.pf-perf-mini-hdr{font-size:13px;color:#333;font-weight:600;display:flex;align-items:center}
+.pf-perf-mini-n{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:44px;color:#094811;line-height:1;margin-top:10px}
+.pf-spark{width:100%;height:36px;margin-top:auto}
+.pf-spark-empty{background:linear-gradient(to right,transparent,rgba(9,72,17,0.1),transparent);border-radius:2px}
+
+.pf-perf-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid #f0ede4}
+.pf-perf-metric{text-align:center}
+.pf-perf-metric-n{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-weight:700;font-size:18px;color:#094811}
+.pf-perf-metric-l{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
