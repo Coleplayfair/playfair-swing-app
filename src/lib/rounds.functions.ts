@@ -28,7 +28,7 @@ async function gcaFetch(path: string, retries = 1): Promise<any> {
 
 function normalizeCourse(course: any, coords?: any) {
   const id = String(course?.courseID ?? "");
-  const name = course?.courseName || "Unknown course";
+  const name = displayName(course?.courseName, course?.clubName);
   const club_name = course?.clubName ?? null;
   const numHoles = parseInt(String(course?.numHoles ?? 18), 10) || 18;
   const parsMen: number[] = Array.isArray(course?.parsMen) ? course.parsMen : [];
