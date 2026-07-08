@@ -285,6 +285,11 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 
 /* ═════════ PERFORMANCE ═════════ */
 .pf-perf-body{background:#f4f1ea;padding:16px 14px 100px;display:flex;flex-direction:column;gap:12px}
+
+/* Coming soon overlay for Play and Performance tabs */
+.pf-play-body *{pointer-events:none !important}
+.pf-play-body [data-allow-click]{pointer-events:auto !important}
+.pf-play-body [data-allow-click] *{pointer-events:auto !important}
 .pf-perf-card{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
 .pf-perf-card-hdr{display:flex;align-items:center;justify-content:space-between;font-size:14px;color:#111;font-weight:600}
 .pf-perf-hdr-lbl{font-family:'Libre Baskerville',Georgia,serif;font-style:italic;font-size:16px;color:#094811;font-weight:700}
