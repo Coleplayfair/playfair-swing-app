@@ -192,6 +192,23 @@ export const listRounds = createServerFn({ method: "POST" })
     return { rounds: r.data || [] };
   });
 
+export const listMyCourses = createServerFn({ method: "POST" })
+  .inputValidator((d: { playerId: string }) => d)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const r = await supabaseAdmin.from("rounds").select("course_id,course_name,started_at").eq("player_id", data.playerId).order("started_at", { ascending: false }).limit(50);
+    const seen = new Set<string>();
+    const ids: string[] = [];
+    for (const row of r.data || []) {
+      if (row.course_id && !seen.has(row.course_id)) { seen.add(row.course_id); ids.push(row.course_id); }
+    }
+    if (!ids.length) return { courses: [] as any[] };
+    const cc = await supabaseAdmin.from("courses_cache").select("id,name,club_name,city,region,country,latitude,longitude,photo_name").in("id", ids);
+    const byId: Record<string, any> = {};
+    for (const c of cc.data || []) byId[c.id] = c;
+    return { courses: ids.map((id) => byId[id]).filter(Boolean) };
+  });
+
 export const deleteRound = createServerFn({ method: "POST" })
   .inputValidator((d: { playerId: string; roundId: string }) => d)
   .handler(async ({ data }) => {
