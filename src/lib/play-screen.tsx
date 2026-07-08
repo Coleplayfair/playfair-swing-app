@@ -424,7 +424,7 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
               <>
                 <div className="gps-mid">
                   <div className="gps-mid-n">{dC ?? "—"}</div>
-                  <div className="gps-mid-l">yds to centre</div>
+                  <div className="gps-mid-l">{unitLabel(units, true)} to centre</div>
                 </div>
                 <div className="gps-side">
                   <div><div className="gps-side-n">{dF ?? "—"}</div><div className="gps-side-l">Front</div></div>
@@ -434,7 +434,11 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
             )}
           </div>
         )}
-        {tab === "map" && <HoleMap gps={gps} green={green} />}
+        {tab === "map" && (
+          <Suspense fallback={<div className="gps-note" style={{ padding: 24 }}>Loading map…</div>}>
+            <HoleMap gps={gps} green={green} />
+          </Suspense>
+        )}
         {tab === "score" && <HoleInput hole={hole} onSave={saveHole} />}
       </div>
 
