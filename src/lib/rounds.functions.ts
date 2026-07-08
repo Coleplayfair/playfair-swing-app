@@ -324,32 +324,34 @@ export const nearbyCourses = createServerFn({ method: "POST" })
       const region = findComp("administrative_area_level_1");
       const country = findComp("country");
 
-      // Try to match to GolfCourseAPI, but ONLY accept a match within MAX_MATCH_KM of the Places location
+      // Try to match to GolfAPI, but ONLY accept a match within MAX_MATCH_KM of the Places location.
+      // /courses supports lat/lng sorting + distance in the response, so use that.
       let matched: any = null;
       try {
-        const raw = await gcaFetch(`/search?search_query=${encodeURIComponent(displayName)}`);
-        const list: any[] = raw?.courses ?? raw?.results ?? [];
-        // Pick the closest candidate within MAX_MATCH_KM
+        const raw = await gcaFetch(
+          `/courses?name=${encodeURIComponent(displayName)}&lat=${pLat}&lng=${pLng}&measureUnit=km`
+        );
+        const list: any[] = raw?.courses ?? [];
+        // Prefer distance from the API; fall back to computed distance if missing.
         let best: { c: any; km: number } | null = null;
         for (const c of list) {
-          const loc = c.location ?? c.club?.location ?? {};
-          if (loc.latitude == null || loc.longitude == null) continue;
-          const km = kmBetween(pLat, pLng, loc.latitude, loc.longitude);
+          const km = typeof c.distance === "number" ? c.distance : Number.POSITIVE_INFINITY;
           if (km <= MAX_MATCH_KM && (!best || km < best.km)) best = { c, km };
         }
         matched = best?.c ?? null;
       } catch { /* ignore */ }
-      if (!matched?.id) continue; // require a verified GCA match so the course is playable
+      if (!matched?.courseID) continue; // require a verified match so the course is playable
 
       const course = {
-        id: String(matched.id),
-        name: matched.course_name || matched.name || displayName,
-        club_name: matched.club_name ?? matched.club?.club_name ?? null,
+        id: String(matched.courseID),
+        name: matched.courseName || displayName,
+        club_name: matched.clubName ?? null,
         city, region, country,
         latitude: pLat,
         longitude: pLng,
         photo_name: p.photos?.[0]?.name ?? null,
       };
+
 
       // Always refresh photo_name/location for nearby (Places is the authoritative source here)
       const existing = await supabaseAdmin.from("courses_cache").select("id,photo_name").eq("id", course.id).maybeSingle();
