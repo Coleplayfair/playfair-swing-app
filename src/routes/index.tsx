@@ -207,11 +207,11 @@ function PlayfairApp() {
       )}
 
       {screen === "play" && (
-        <PlayScreen bottomNav={<BottomNav active="play" onTab={go} />} />
+        <PlayScreen bottomNav={<BottomNav active="play" onTab={go} />} onBookBay={() => go("venue")} />
       )}
 
       {screen === "performance" && (
-        <PerformanceScreen bottomNav={<BottomNav active="performance" onTab={go} />} />
+        <PerformanceScreen bottomNav={<BottomNav active="performance" onTab={go} />} onBookBay={() => go("venue")} />
       )}
 
       {(screen === "venue" || screen === "bag" || screen === "me") && (

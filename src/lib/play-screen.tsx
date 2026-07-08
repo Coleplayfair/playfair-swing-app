@@ -29,7 +29,7 @@ function requestCurrentLocation(onSuccess: (gps: LatLng) => void, onError?: (mes
 }
 
 /* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
-export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
+export function PlayScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNode; onBookBay?: () => void }) {
   const [view, setView] = useState<PlayView>("home");
   const [activeRoundId, setActiveRoundId] = useState<string | null>(null);
   const [pickCourse, setPickCourse] = useState<any | null>(null);
@@ -53,6 +53,7 @@ export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
           onHistory={() => setView("history")}
           onResume={openRound}
           onPickCourse={startFromCourse}
+          onBookBay={onBookBay}
         />
       )}
       {view === "search" && (
@@ -93,8 +94,8 @@ export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
 }
 
 /* ─────── HOME ─────── */
-function PlayHome({ onSearch, onHistory, onResume, onPickCourse }: {
-  onSearch: () => void; onHistory: () => void; onResume: (id: string) => void; onPickCourse: (c: any) => void;
+function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
+  onSearch: () => void; onHistory: () => void; onResume: (id: string) => void; onPickCourse: (c: any) => void; onBookBay?: () => void;
 }) {
   const [rounds, setRounds] = useState<any[]>([]);
   const [myCourses, setMyCourses] = useState<any[]>([]);
@@ -186,6 +187,18 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse }: {
             <div className="pf-empty-title">No rounds yet</div>
             <div className="pf-empty-sub">Search for a course above to play your first round.</div>
           </div>
+        )}
+
+        {onBookBay && (
+          <>
+            <div className="pf-section-label" style={{ marginTop: 24 }}>Playfair Venue</div>
+            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
+              Book Indoor Bay →
+            </button>
+            <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
+              On-course GPS scoring is coming soon.
+            </div>
+          </>
         )}
       </div>
     </>
@@ -658,7 +671,7 @@ function History({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) 
 }
 
 /* ═════════════════════════════════════════════ PERFORMANCE ═════════════════════════════════════════════ */
-export function PerformanceScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
+export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNode; onBookBay?: () => void }) {
   const pid = getPlayerId();
   const [rounds, setRounds] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -736,6 +749,17 @@ export function PerformanceScreen({ bottomNav }: { bottomNav: React.ReactNode })
             <PerfMetric label="Best" value={stats?.best ? (stats.best.total_score - stats.best.total_par >= 0 ? `+${stats.best.total_score - stats.best.total_par}` : `${stats.best.total_score - stats.best.total_par}`) : "—"} />
           </div>
         </div>
+
+        {onBookBay && (
+          <>
+            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
+              Book Indoor Bay →
+            </button>
+            <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
+              Advanced stats and insights are coming soon.
+            </div>
+          </>
+        )}
       </div>
       {bottomNav}
     </div>
