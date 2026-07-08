@@ -10,7 +10,7 @@ import coursePlaceholder from "@/assets/course-placeholder.jpg";
 
 import { RoundSettings, RoundDetails, HoleInput } from "@/lib/round-flow";
 
-const HoleMap = lazy(() => import("@/lib/hole-map.client"));
+const HoleMap = lazy(() => import("@/lib/hole-map"));
 
 type PlayView = "home" | "search" | "round" | "history" | "summary" | "settings" | "details";
 
