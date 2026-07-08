@@ -192,23 +192,30 @@ export const listRounds = createServerFn({ method: "POST" })
     return { rounds: r.data || [] };
   });
 
+function kmBetween(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export const nearbyCourses = createServerFn({ method: "POST" })
   .inputValidator((d: { lat: number; lng: number; radiusMeters?: number }) => d)
   .handler(async ({ data }) => {
     const key = process.env.GOOGLE_API_KEY;
     if (!key) return { courses: [] as any[] };
-    const radius = Math.min(Math.max(data.radiusMeters ?? 30000, 1000), 50000);
-    // Google Places v1 Nearby Search — golf courses
+    const radius = Math.min(Math.max(data.radiusMeters ?? 50000, 1000), 50000);
     const res = await fetch("https://places.googleapis.com/v1/places:searchNearby", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.photos",
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.photos,places.addressComponents",
       },
       body: JSON.stringify({
         includedTypes: ["golf_course"],
-        maxResultCount: 10,
+        maxResultCount: 20,
         locationRestriction: { circle: { center: { latitude: data.lat, longitude: data.lng }, radius } },
         rankPreference: "DISTANCE",
       }),
@@ -220,41 +227,69 @@ export const nearbyCourses = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const out: any[] = [];
+    const MAX_MATCH_KM = 25;
+
     for (const p of places) {
       const displayName = p?.displayName?.text || "";
-      if (!displayName) continue;
+      const pLat = p?.location?.latitude;
+      const pLng = p?.location?.longitude;
+      if (!displayName || pLat == null || pLng == null) continue;
+
+      // Parse address components for city/region/country from Places (authoritative for location)
+      const comps: any[] = p?.addressComponents ?? [];
+      const findComp = (type: string) =>
+        comps.find((c) => (c.types || []).includes(type))?.shortText
+        ?? comps.find((c) => (c.types || []).includes(type))?.longText
+        ?? null;
+      const city = findComp("locality") || findComp("postal_town") || findComp("administrative_area_level_2");
+      const region = findComp("administrative_area_level_1");
+      const country = findComp("country");
+
+      // Try to match to GolfCourseAPI, but ONLY accept a match within MAX_MATCH_KM of the Places location
       let matched: any = null;
       try {
         const raw = await gcaFetch(`/search?search_query=${encodeURIComponent(displayName)}`);
-        const list = raw?.courses ?? raw?.results ?? [];
-        matched = list[0] || null;
+        const list: any[] = raw?.courses ?? raw?.results ?? [];
+        // Pick the closest candidate within MAX_MATCH_KM
+        let best: { c: any; km: number } | null = null;
+        for (const c of list) {
+          const loc = c.location ?? c.club?.location ?? {};
+          if (loc.latitude == null || loc.longitude == null) continue;
+          const km = kmBetween(pLat, pLng, loc.latitude, loc.longitude);
+          if (km <= MAX_MATCH_KM && (!best || km < best.km)) best = { c, km };
+        }
+        matched = best?.c ?? null;
       } catch { /* ignore */ }
-      if (!matched?.id) continue;
-      const loc = matched.location ?? matched.club?.location ?? {};
+      if (!matched?.id) continue; // require a verified GCA match so the course is playable
+
       const course = {
         id: String(matched.id),
         name: matched.course_name || matched.name || displayName,
         club_name: matched.club_name ?? matched.club?.club_name ?? null,
-        city: loc.city ?? null,
-        region: loc.state ?? loc.region ?? null,
-        country: loc.country ?? null,
-        latitude: loc.latitude ?? p.location?.latitude ?? null,
-        longitude: loc.longitude ?? p.location?.longitude ?? null,
+        city, region, country,
+        latitude: pLat,
+        longitude: pLng,
         photo_name: p.photos?.[0]?.name ?? null,
       };
-      // Upsert lightweight cache row so /api/public/course-photo can serve immediately
-      await supabaseAdmin.from("courses_cache").upsert({
-        id: course.id,
-        name: course.name,
-        club_name: course.club_name,
-        city: course.city,
-        region: course.region,
-        country: course.country,
-        latitude: course.latitude,
-        longitude: course.longitude,
-        photo_name: course.photo_name,
-        photo_checked_at: course.photo_name ? new Date().toISOString() : null,
-      }, { onConflict: "id", ignoreDuplicates: true });
+
+      // Always refresh photo_name/location for nearby (Places is the authoritative source here)
+      const existing = await supabaseAdmin.from("courses_cache").select("id,photo_name").eq("id", course.id).maybeSingle();
+      if (!existing.data) {
+        await supabaseAdmin.from("courses_cache").insert({
+          id: course.id, name: course.name, club_name: course.club_name,
+          city: course.city, region: course.region, country: course.country,
+          latitude: course.latitude, longitude: course.longitude,
+          photo_name: course.photo_name,
+          photo_checked_at: course.photo_name ? new Date().toISOString() : null,
+        });
+      } else if (course.photo_name && !existing.data.photo_name) {
+        await supabaseAdmin.from("courses_cache").update({
+          photo_name: course.photo_name,
+          photo_checked_at: new Date().toISOString(),
+          latitude: course.latitude, longitude: course.longitude,
+        }).eq("id", course.id);
+      }
+
       out.push(course);
       if (out.length >= 10) break;
     }
