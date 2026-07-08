@@ -254,6 +254,8 @@ function CourseSearch({ onBack, onPick }: { onBack: () => void; onPick: (c: any)
         </div>
 
         {loading && <div className="pf-note">Searching…</div>}
+        {err && !loading && <div className="pf-note">{err}</div>}
+
 
         <div className="pf-course-stack">
           {results.map((c) => (
