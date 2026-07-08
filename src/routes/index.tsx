@@ -30,10 +30,10 @@ type Screen =
   | "setup"
   | "play"
   | "performance"
-  | "book"
+  | "venue"
   | "bag"
-  | "profile";
-type NavTab = "play" | "performance" | "book" | "bag" | "profile";
+  | "me";
+type NavTab = "play" | "performance" | "venue" | "bag" | "me";
 
 type Profile = {
   firstName: string;
