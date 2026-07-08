@@ -17,10 +17,13 @@ async function gcaFetch(path: string, retries = 1): Promise<any> {
     if (res.status === 429) {
       throw new Error("Course directory is busy right now — please try again in a moment.");
     }
+    const body = await res.text().catch(() => "");
+    if (/limit exceeded|quota/i.test(body)) {
+      throw new Error("Course directory monthly request limit reached. Please try again later.");
+    }
     if (res.status === 401 || res.status === 403) {
       throw new Error("Course directory rejected the API key. Please check GOLF_COURSE_API_KEY.");
     }
-    const body = await res.text().catch(() => "");
     throw new Error(`GolfAPI ${res.status}: ${body.slice(0, 200)}`);
   }
   throw new Error("Course directory unavailable");
