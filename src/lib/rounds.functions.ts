@@ -130,7 +130,7 @@ export const getCourse = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cached = await supabaseAdmin.from("courses_cache").select("*").eq("id", data.courseId).maybeSingle();
-    // Auto-refresh cached rows that were stored before the paid-tier upgrade and lack green coordinates.
+    // Refresh cached rows that lack green coordinates (stored before the provider swap).
     const stale = cached.data && !hasGreenCoords(cached.data.tee_boxes);
     if (cached.data && !data.refresh && !stale) {
       const c = cached.data;
@@ -140,8 +140,14 @@ export const getCourse = createServerFn({ method: "POST" })
         tee_boxes: c.tee_boxes, holes: c.holes,
       };
     }
-    const raw = await gcaFetch(`/courses/${encodeURIComponent(data.courseId)}`);
-    const n = normalizeCourse(raw);
+    const course = await gcaFetch(`/courses/${encodeURIComponent(data.courseId)}`);
+    let coords: any = null;
+    if (String(course?.hasGPS ?? "0") === "1") {
+      try {
+        coords = await gcaFetch(`/coordinates/${encodeURIComponent(data.courseId)}`);
+      } catch { /* GPS optional; continue without */ }
+    }
+    const n = normalizeCourse(course, coords);
     await supabaseAdmin.from("courses_cache").upsert({
       id: n.id, name: n.name, club_name: n.club_name, city: n.city, region: n.region,
       country: n.country, latitude: n.latitude, longitude: n.longitude,
@@ -150,6 +156,7 @@ export const getCourse = createServerFn({ method: "POST" })
     const { raw: _r, ...rest } = n;
     return rest;
   });
+
 
 export const startRound = createServerFn({ method: "POST" })
   .inputValidator((d: {
