@@ -2,18 +2,27 @@ import { createServerFn } from "@tanstack/react-start";
 
 const API_BASE = "https://api.golfcourseapi.com/v1";
 
-async function gcaFetch(path: string) {
+async function gcaFetch(path: string, retries = 2): Promise<any> {
   const key = process.env.GOLF_COURSE_API_KEY;
   if (!key) throw new Error("GOLF_COURSE_API_KEY not set");
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { Authorization: `Key ${key}` },
-  });
-  if (!res.ok) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { Authorization: `Key ${key}` },
+    });
+    if (res.ok) return res.json();
+    if (res.status === 429 && attempt < retries) {
+      await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
+      continue;
+    }
+    if (res.status === 429) {
+      throw new Error("Course directory is busy right now — please try again in a moment.");
+    }
     const body = await res.text().catch(() => "");
     throw new Error(`GolfCourseAPI ${res.status}: ${body.slice(0, 200)}`);
   }
-  return res.json();
+  throw new Error("Course directory unavailable");
 }
+
 
 function normalizeCourse(raw: any) {
   const course = raw?.course ?? raw;

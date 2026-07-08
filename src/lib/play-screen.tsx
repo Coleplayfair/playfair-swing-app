@@ -211,6 +211,7 @@ function CourseSearch({ onBack, onPick }: { onBack: () => void; onPick: (c: any)
   const [q, setQ] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
@@ -220,13 +221,14 @@ function CourseSearch({ onBack, onPick }: { onBack: () => void; onPick: (c: any)
 
   const run = async () => {
     if (q.trim().length < 2) return;
-    setLoading(true);
+    setLoading(true); setErr(null);
     try {
       const r = await searchCourses({ data: { query: q.trim() } });
       setResults(r.courses);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { setErr(e.message || "Search failed"); setResults([]); }
     setLoading(false);
   };
+
 
   return (
     <>
@@ -252,6 +254,8 @@ function CourseSearch({ onBack, onPick }: { onBack: () => void; onPick: (c: any)
         </div>
 
         {loading && <div className="pf-note">Searching…</div>}
+        {err && !loading && <div className="pf-note">{err}</div>}
+
 
         <div className="pf-course-stack">
           {results.map((c) => (
