@@ -312,8 +312,8 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 
 /* ═════════════ ROUND SETTINGS / DETAILS / HOLE INPUT ═════════════ */
 .rs-topbar { display:flex; align-items:center; justify-content:space-between; padding:44px 16px 12px; background:#f4f4f6; border-bottom:1px solid #eaeaee; }
-.rs-topbar-dark { background:#0b0f19; color:#EDE9DF; }
-.rs-topbar-dark .rs-title { color:#EDE9DF; }
+.rs-topbar-dark { background:#094811; color:#EDE9DF; border-bottom-color:#063309; }
+.rs-topbar-dark .rs-title { color:#EDE9DF; font-style:italic; }
 .rs-x { background:none; border:none; font-size:22px; color:#333; cursor:pointer; width:32px; }
 .rs-topbar-dark .rs-x, .rs-topbar-dark .rs-info { color:#EDE9DF; }
 .rs-title { font-family:'Libre Baskerville',Georgia,serif; font-size:17px; color:#111; font-weight:600; }
@@ -351,7 +351,7 @@ body{font-family:'DM Sans',Arial,sans-serif;display:flex;align-items:flex-start;
 .rd-course-card { background:#fff; border-radius:14px; padding:14px 16px; margin-bottom:14px; }
 .rd-course-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
 .rd-chip { background:#f2f2f6; padding:4px 10px; border-radius:6px; font-size:10.5px; font-weight:700; letter-spacing:.08em; color:#111; display:flex; align-items:center; gap:4px; }
-.rd-chip-dot { color:#f5a623; font-size:14px; line-height:1; }
+.rd-chip-dot { color:#094811; font-size:14px; line-height:1; }
 .rd-time { font-size:12.5px; color:#666; }
 .rd-course-row { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
 .rd-course-thumb { width:52px; height:52px; border-radius:10px; background:#dde4ea 50%/cover; flex-shrink:0; }
