@@ -173,7 +173,7 @@ function CourseCard({ course, gps, onPlay, onPreview, synced }: {
     ? Math.round(haversineKm(gps.lat, gps.lng, course.latitude, course.longitude))
     : null;
   const location = [course.city, course.region || course.country].filter(Boolean).join(", ");
-  const photoSrc = `/api/public/course-photo/${course.id}?name=${encodeURIComponent([course.name, course.club_name].filter(Boolean).join(" "))}`;
+  const photoSrc = `/api/public/course-photo/${course.id}?name=${encodeURIComponent(course.club_name || course.name || "")}`;
   return (
     <div className="pf-course-card">
       <img
