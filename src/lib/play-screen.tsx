@@ -188,6 +188,18 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
             <div className="pf-empty-sub">Search for a course above to play your first round.</div>
           </div>
         )}
+
+        {onBookBay && (
+          <>
+            <div className="pf-section-label" style={{ marginTop: 24 }}>Playfair Venue</div>
+            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
+              Book Indoor Bay →
+            </button>
+            <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
+              On-course GPS scoring is coming soon.
+            </div>
+          </>
+        )}
       </div>
     </>
   );
