@@ -432,7 +432,8 @@ function CheckEmailScreen({ email, onBack }: { email: string; onBack: () => void
         <div style={{ fontSize: 14, color: "#666", lineHeight: 1.6, maxWidth: 320, margin: "0 auto" }}>
           We've sent a confirmation link to<br />
           <strong style={{ color: "#111" }}>{email}</strong><br /><br />
-          Click the link in that email to activate your account, then come back here to log in.
+          Click the link in that email to activate your account, then come back here to log in.<br /><br />
+          <em>Can't find it? Check your Spam or Junk folder.</em>
         </div>
       </div>
       <div className="form-action">
@@ -501,7 +502,7 @@ function LoginScreen({ onBack, onSignup }: { onBack: () => void; onSignup: () =>
     if (error) {
       setFormErr(error.message);
     } else {
-      setFormErr("Password reset email sent. Check your inbox.");
+      setFormErr("Password reset email sent. Check your inbox (and Spam/Junk if you don't see it).");
     }
   };
 
