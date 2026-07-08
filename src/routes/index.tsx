@@ -85,7 +85,7 @@ function PlayfairApp() {
     const loadProfile = async (uid: string) => {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name,last_name,email,mobile,suburb,handicap")
+        .select("first_name,last_name,email,mobile,suburb,handicap,avatar_url")
         .eq("id", uid)
         .maybeSingle();
       if (!mounted) return;
@@ -98,6 +98,7 @@ function PlayfairApp() {
           suburb: data.suburb ?? "",
         });
         if (typeof data.handicap === "number") setHcp(Math.round(data.handicap));
+        if (data.avatar_url) setAvatar(data.avatar_url);
       }
     };
 
