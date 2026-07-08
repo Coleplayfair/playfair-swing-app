@@ -248,19 +248,6 @@ function PlayfairApp() {
         />
       )}
 
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (!f) return;
-          const reader = new FileReader();
-          reader.onload = () => setAvatar(reader.result as string);
-          reader.readAsDataURL(f);
-        }}
-      />
     </div>
   );
 }
