@@ -75,12 +75,24 @@ export const searchCourses = createServerFn({ method: "POST" })
     return { courses };
   });
 
+function hasGreenCoords(tee_boxes: any): boolean {
+  const teeArr = Array.isArray(tee_boxes) ? tee_boxes : [];
+  for (const t of teeArr) {
+    for (const h of t.holes || []) {
+      if (h.green_center || h.green_front || h.green_back || h.green) return true;
+    }
+  }
+  return false;
+}
+
 export const getCourse = createServerFn({ method: "POST" })
-  .inputValidator((d: { courseId: string }) => d)
+  .inputValidator((d: { courseId: string; refresh?: boolean }) => d)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cached = await supabaseAdmin.from("courses_cache").select("*").eq("id", data.courseId).maybeSingle();
-    if (cached.data) {
+    // Auto-refresh cached rows that were stored before the paid-tier upgrade and lack green coordinates.
+    const stale = cached.data && !hasGreenCoords(cached.data.tee_boxes);
+    if (cached.data && !data.refresh && !stale) {
       const c = cached.data;
       return {
         id: c.id, name: c.name, club_name: c.club_name, city: c.city, region: c.region,
