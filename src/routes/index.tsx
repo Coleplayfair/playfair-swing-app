@@ -4,7 +4,7 @@ import { z } from "zod";
 import { CLUBS, CLUB_SVGS, DEFAULT_SELECTED, type Club } from "@/lib/clubs";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { PlayScreen } from "@/lib/play-screen";
+import { PlayScreen, PerformanceScreen } from "@/lib/play-screen";
 import logoBeige from "@/assets/pf-primary-beige.png.asset.json";
 import logoGreen from "@/assets/pf-primary-green.png.asset.json";
 import logoWhite from "@/assets/pf-primary-white.png.asset.json";
@@ -29,10 +29,11 @@ type Screen =
   | "check-email"
   | "setup"
   | "play"
+  | "performance"
   | "book"
   | "bag"
   | "profile";
-type NavTab = "play" | "book" | "bag" | "profile";
+type NavTab = "play" | "performance" | "book" | "bag" | "profile";
 
 type Profile = {
   firstName: string;
@@ -206,6 +207,10 @@ function PlayfairApp() {
 
       {screen === "play" && (
         <PlayScreen bottomNav={<BottomNav active="play" onTab={go} />} />
+      )}
+
+      {screen === "performance" && (
+        <PerformanceScreen bottomNav={<BottomNav active="performance" onTab={go} />} />
       )}
 
       {(screen === "book" || screen === "bag" || screen === "profile") && (
@@ -906,6 +911,10 @@ function BottomNav({ active, onTab }: { active: NavTab; onTab: (s: Screen) => vo
         <span className="nav-ico"><FlagIcon size={22} /></span>
         <span className="nav-lbl">Play</span>
       </button>
+      <button className={"nav-item" + (active === "performance" ? " active" : "")} onClick={() => onTab("performance")}>
+        <span className="nav-ico"><PerfIcon size={22} /></span>
+        <span className="nav-lbl">Performance</span>
+      </button>
       <button className={"nav-item" + (active === "book" ? " active" : "")} onClick={() => onTab("book")}>
         <span className="nav-ico"><GolferIcon size={22} /></span>
         <span className="nav-lbl">Book</span>
@@ -919,5 +928,15 @@ function BottomNav({ active, onTab }: { active: NavTab; onTab: (s: Screen) => vo
         <span className="nav-lbl">Profile</span>
       </button>
     </div>
+  );
+}
+
+function PerfIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 12l4-3" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+    </svg>
   );
 }
