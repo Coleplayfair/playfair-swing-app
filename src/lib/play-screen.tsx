@@ -184,7 +184,7 @@ function CourseSearch({ onBack, onStarted }: { onBack: () => void; onStarted: (i
             <div className="course-row course-row-img" key={c.id} onClick={() => pick(c)}>
               <img
                 className="course-thumb"
-                src={`/api/public/course-photo/${c.id}`}
+                src={`/api/public/course-photo/${c.id}?name=${encodeURIComponent([c.name, c.club_name].filter(Boolean).join(" "))}`}
                 alt=""
                 loading="lazy"
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
