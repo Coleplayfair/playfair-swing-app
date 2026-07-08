@@ -57,7 +57,7 @@ export function RoundSettings({ course, onBack, onCreated }: {
     <>
       <div className="rs-topbar">
         <button className="rs-x" onClick={onBack} aria-label="Close">✕</button>
-        <div className="rs-title">Round Settings</div>
+        <div className="rs-title">Round Setup</div>
         <button className="rs-info" aria-label="Info">i</button>
       </div>
       <div className="rs-body">
@@ -81,7 +81,7 @@ export function RoundSettings({ course, onBack, onCreated }: {
           </button>
         </div>
 
-        <div className="rs-section-label">FORMAT</div>
+        <div className="rs-section-label">Format</div>
         <div className="rs-card">
           <button className="rs-row" onClick={() => setMode(mode === "general_play" ? "tournament" : "general_play")}>
             <span className="rs-row-lbl">Mode</span>
@@ -103,28 +103,29 @@ export function RoundSettings({ course, onBack, onCreated }: {
           </div>
         </div>
 
-        <div className="rs-section-label">OPTIONS</div>
+        <div className="rs-section-label">Options</div>
         <div className="rs-card">
           <Toggle
-            title="Handicap Round"
-            sub="Used for handicap calculation"
+            title="Count for Handicap"
+            sub="Include this round in your handicap index"
             value={handicapRound}
             onChange={setHandicapRound}
-            icon="🎯"
+            icon="◎"
           />
           <div className="rs-divider" />
           <Toggle
-            title="Go Live"
-            sub="Allow your friends to follow your round as you play it"
+            title="Share Live"
+            sub="Let your buddies follow along in real time"
             value={goLive}
             onChange={setGoLive}
-            icon="📡"
+            icon="◉"
           />
           <div className="rs-divider" />
           <Toggle
             title="GPS Only"
-            sub="Skip scoring and focus on GPS distances during your round"
+            sub="Skip scoring — just yardages"
             value={gpsOnly}
+            icon="◈"
             onChange={setGpsOnly}
           />
         </div>
@@ -149,7 +150,7 @@ export function RoundSettings({ course, onBack, onCreated }: {
       </div>
       <div className="rs-footer">
         <button className="rs-cta" onClick={create} disabled={busy || !full}>
-          {busy ? "Creating…" : "Create Round"}
+          {busy ? "Preparing…" : "Tee it up"}
         </button>
       </div>
     </>
