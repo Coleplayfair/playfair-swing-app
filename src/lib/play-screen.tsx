@@ -13,14 +13,35 @@ import { RoundSettings, RoundDetails, HoleInput } from "@/lib/round-flow";
 const HoleMap = lazy(() => import("@/lib/hole-map"));
 
 type PlayView = "home" | "search" | "round" | "history" | "summary" | "settings" | "details";
+type LatLng = { lat: number; lng: number };
+
+function requestCurrentLocation(onSuccess: (gps: LatLng) => void, onError?: (message: string) => void) {
+  if (typeof window === "undefined" || !("geolocation" in navigator)) {
+    onError?.("GPS is not available on this device.");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => onSuccess({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    (err) => onError?.(err.code === err.PERMISSION_DENIED ? "Location permission is turned off." : "GPS could not get your position."),
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+  );
+}
 
 /* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
 export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
   const [view, setView] = useState<PlayView>("home");
   const [activeRoundId, setActiveRoundId] = useState<string | null>(null);
   const [pickCourse, setPickCourse] = useState<any | null>(null);
+  const [roundGps, setRoundGps] = useState<LatLng | null>(null);
+  const [roundGpsError, setRoundGpsError] = useState<string | null>(null);
 
-  const openRound = (id: string) => { setActiveRoundId(id); setView("round"); };
+  const openRound = (id: string) => {
+    setRoundGpsError(null);
+    requestCurrentLocation(setRoundGps, setRoundGpsError);
+    setActiveRoundId(id);
+    setView("round");
+  };
   const showSummary = (id: string) => { setActiveRoundId(id); setView("summary"); };
   const startFromCourse = (c: any) => { setPickCourse(c); setView("settings"); };
 
@@ -48,11 +69,17 @@ export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
         <RoundDetails
           roundId={activeRoundId}
           onClose={() => setView("home")}
-          onStart={() => setView("round")}
+          onStart={() => openRound(activeRoundId)}
         />
       )}
       {view === "round" && activeRoundId && (
-        <ActiveRound roundId={activeRoundId} onExit={() => setView("home")} onFinish={() => showSummary(activeRoundId)} />
+        <ActiveRound
+          roundId={activeRoundId}
+          initialGps={roundGps}
+          initialGpsError={roundGpsError}
+          onExit={() => setView("home")}
+          onFinish={() => showSummary(activeRoundId)}
+        />
       )}
       {view === "summary" && activeRoundId && (
         <RoundSummary roundId={activeRoundId} onDone={() => setView("home")} />
@@ -329,12 +356,15 @@ function TeePicker({ course, onBack, onStarted }: { course: any; onBack: () => v
 }
 
 /* ═════════════════════════════════════════════ ACTIVE ROUND ═════════════════════════════════════════════ */
-function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: () => void; onFinish: () => void }) {
+function ActiveRound({ roundId, initialGps, initialGpsError, onExit, onFinish }: {
+  roundId: string; initialGps: LatLng | null; initialGpsError: string | null; onExit: () => void; onFinish: () => void;
+}) {
   const pid = getPlayerId();
   const [data, setData] = useState<any>(null);
   const [holeIdx, setHoleIdx] = useState(0);
   const [tab, setTab] = useState<"gps" | "map" | "score">("gps");
-  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
+  const [gps, setGps] = useState<LatLng | null>(initialGps);
+  const [gpsError, setGpsError] = useState<string | null>(initialGpsError);
 
   const [units, setU] = useUnits();
 
@@ -343,11 +373,28 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
   }, [pid, roundId]);
 
   useEffect(() => {
-    if (!("geolocation" in navigator)) return;
+    if (initialGps) {
+      setGps(initialGps);
+      setGpsError(null);
+    }
+  }, [initialGps?.lat, initialGps?.lng]);
+
+  useEffect(() => {
+    if (initialGpsError) setGpsError(initialGpsError);
+  }, [initialGpsError]);
+
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      setGpsError("GPS is not available on this device.");
+      return;
+    }
     const id = navigator.geolocation.watchPosition(
-      (pos) => setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 5000 }
+      (pos) => {
+        setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGpsError(null);
+      },
+      (err) => setGpsError(err.code === err.PERMISSION_DENIED ? "Location permission is turned off." : "GPS could not get your position."),
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
     );
     return () => navigator.geolocation.clearWatch(id);
   }, []);
@@ -419,7 +466,13 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
       <div className="round-body">
         {tab === "gps" && (
           <div className="gps-view">
-            {!gps && <div className="gps-note">Waiting for GPS…</div>}
+            {!gps && !gpsError && <div className="gps-note">Waiting for GPS…</div>}
+            {!gps && gpsError && (
+              <div className="gps-note">
+                {gpsError}<br />
+                <button className="gps-retry" onClick={() => { setGpsError(null); requestCurrentLocation(setGps, setGpsError); }}>Try GPS again</button>
+              </div>
+            )}
             {gps && !green && <div className="gps-note">GPS distances haven't been mapped for this hole yet.</div>}
             {green && (
               <>
