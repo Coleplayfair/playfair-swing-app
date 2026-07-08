@@ -690,6 +690,7 @@ export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.R
   const pid = getPlayerId();
   const [rounds, setRounds] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   useEffect(() => {
     listRounds({ data: { playerId: pid } }).then((r) => setRounds(r.rounds));
     getUserStats({ data: { playerId: pid } }).then(setStats);
