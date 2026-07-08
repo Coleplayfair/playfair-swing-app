@@ -211,14 +211,14 @@ export function RoundDetails({ roundId, onClose, onStart }: {
     <>
       <div className="rs-topbar rs-topbar-dark">
         <button className="rs-x" onClick={onClose}>✕</button>
-        <div className="rs-title">Round Details</div>
+        <div className="rs-title">Your Round</div>
         <button className="rs-info">⋯</button>
       </div>
 
       <div className="rs-body">
         <div className="rd-course-card">
           <div className="rd-course-head">
-            <span className="rd-chip">STARTING SOON <span className="rd-chip-dot">•</span></span>
+            <span className="rd-chip">ON THE TEE <span className="rd-chip-dot">•</span></span>
             <span className="rd-time">Today · {new Date(round.starts_at || round.started_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</span>
           </div>
           <div className="rd-course-row">
@@ -240,14 +240,14 @@ export function RoundDetails({ roundId, onClose, onStart }: {
         </div>
 
         <div className="rd-side-game">
-          <span className="rd-side-icon">⛳</span>
-          <span className="rd-side-lbl">Side Game</span>
+          <span className="rd-side-icon">◆</span>
+          <span className="rd-side-lbl">Wager / Side Bet</span>
           <span className="rd-side-add">Add ›</span>
         </div>
 
         <div className="rd-groups-hdr">
-          <span>Groups</span>
-          <span className="rd-draw">⇄ Draw</span>
+          <span>Playing Group</span>
+          <span className="rd-draw">⇄ Draw order</span>
         </div>
 
         <div className="rd-group-card">
