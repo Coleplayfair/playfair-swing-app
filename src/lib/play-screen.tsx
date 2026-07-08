@@ -116,6 +116,7 @@ function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
   const [nearbyLoading, setNearbyLoading] = useState(false);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsDenied, setGpsDenied] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
   const pid = getPlayerId();
 
   useEffect(() => {
