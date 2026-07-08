@@ -386,25 +386,25 @@ function AddPlayerSheet({ roundId, onClose, onAdded, shareLink }: {
     <div className="rs-sheet">
       <div className="rs-sheet-hdr">
         <button className="rs-sheet-btn" onClick={onClose}>Cancel</button>
-        <div className="rs-sheet-title">Add Player</div>
+        <div className="rs-sheet-title">Invite Players</div>
         <button className="rs-sheet-btn rs-sheet-btn-primary" onClick={onClose}>Done</button>
       </div>
       <div className="rs-body">
         <div className="ap-search">
-          <input placeholder="Search by Name" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input placeholder="Find a Playfair member" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="ap-share">
-          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>▦ Share QR code</button>
-          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>🔗 Share link</button>
+          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>▦ QR code</button>
+          <button onClick={() => { navigator.clipboard?.writeText(shareLink); alert("Share link copied"); }}>↗ Copy link</button>
         </div>
         <div className="ap-tabs">
-          <button className={"ap-tab" + (tab === "buddies" ? " on" : "")} onClick={() => setTab("buddies")}>BUDDIES</button>
-          <button className={"ap-tab" + (tab === "guests" ? " on" : "")} onClick={() => setTab("guests")}>GUESTS</button>
+          <button className={"ap-tab" + (tab === "buddies" ? " on" : "")} onClick={() => setTab("buddies")}>MY GROUP</button>
+          <button className={"ap-tab" + (tab === "guests" ? " on" : "")} onClick={() => setTab("guests")}>WALK-ON</button>
         </div>
 
         {tab === "buddies" && (
           <>
-            <div className="ap-section">{searchResults ? "SEARCH" : "ALL"}</div>
+            <div className="ap-section">{searchResults ? "MATCHES" : "PLAYFAIR MEMBERS"}</div>
             <div className="ap-list">
               {list.length === 0 && <div className="pf-note">{searchResults ? "No matches" : "No buddies yet. Search for someone to add them."}</div>}
               {list.map((p: any) => (
