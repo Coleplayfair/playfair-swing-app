@@ -425,11 +425,11 @@ function AddPlayerSheet({ roundId, onClose, onAdded, shareLink }: {
 
         {tab === "guests" && (
           <div className="ap-guest-form">
-            <label>Guest name</label>
+            <label>Their name</label>
             <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="e.g. Jane D." />
             <label>Handicap (optional)</label>
             <input value={guestHcp} onChange={(e) => setGuestHcp(e.target.value)} placeholder="e.g. 18" inputMode="decimal" />
-            <button className="rs-cta" onClick={addGuest} disabled={busy || !guestName.trim()}>Add guest</button>
+            <button className="rs-cta" onClick={addGuest} disabled={busy || !guestName.trim()}>Add to group</button>
           </div>
         )}
       </div>
