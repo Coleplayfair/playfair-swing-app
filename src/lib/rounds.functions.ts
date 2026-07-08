@@ -254,7 +254,7 @@ export const nearbyCourses = createServerFn({ method: "POST" })
         longitude: course.longitude,
         photo_name: course.photo_name,
         photo_checked_at: course.photo_name ? new Date().toISOString() : null,
-      }, { onConflict: "id", ignoreDuplicates: false });
+      }, { onConflict: "id", ignoreDuplicates: true });
       out.push(course);
       if (out.length >= 10) break;
     }
