@@ -93,8 +93,8 @@ export function PlayScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNod
 }
 
 /* ─────── HOME ─────── */
-function PlayHome({ onSearch, onHistory, onResume, onPickCourse }: {
-  onSearch: () => void; onHistory: () => void; onResume: (id: string) => void; onPickCourse: (c: any) => void;
+function PlayHome({ onSearch, onHistory, onResume, onPickCourse, onBookBay }: {
+  onSearch: () => void; onHistory: () => void; onResume: (id: string) => void; onPickCourse: (c: any) => void; onBookBay?: () => void;
 }) {
   const [rounds, setRounds] = useState<any[]>([]);
   const [myCourses, setMyCourses] = useState<any[]>([]);
