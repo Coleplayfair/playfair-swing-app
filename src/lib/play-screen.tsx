@@ -29,7 +29,7 @@ function requestCurrentLocation(onSuccess: (gps: LatLng) => void, onError?: (mes
 }
 
 /* ═════════════════════════════════════════════ PLAY ═════════════════════════════════════════════ */
-export function PlayScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
+export function PlayScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNode; onBookBay?: () => void }) {
   const [view, setView] = useState<PlayView>("home");
   const [activeRoundId, setActiveRoundId] = useState<string | null>(null);
   const [pickCourse, setPickCourse] = useState<any | null>(null);
