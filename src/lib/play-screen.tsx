@@ -480,35 +480,7 @@ function Stepper({ label, value, onChange, min = 1, max = 15, par }: { label: st
   );
 }
 
-/* ─────── MAP ─────── */
-function HoleMap({ gps, green }: { gps: { lat: number; lng: number } | null; green: any }) {
-  const center = green?.center ? [green.center.latitude, green.center.longitude] as [number, number]
-    : gps ? [gps.lat, gps.lng] as [number, number]
-    : [0, 0] as [number, number];
-  if (!gps && !green?.center) {
-    return <div className="gps-note" style={{ padding: 24 }}>Enable location to see the map.</div>;
-  }
-  const greenIcon = L.divIcon({ className: "green-pin", html: "<div></div>", iconSize: [18, 18] });
-  const meIcon = L.divIcon({ className: "me-pin", html: "<div></div>", iconSize: [18, 18] });
-  return (
-    <div className="map-wrap">
-      <MapContainer center={center} zoom={17} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
-        <TileLayer attribution="© OpenStreetMap" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {gps && <Marker position={[gps.lat, gps.lng]} icon={meIcon} />}
-        {green?.front && <Marker position={[green.front.latitude, green.front.longitude]} icon={greenIcon} />}
-        {green?.center && <Marker position={[green.center.latitude, green.center.longitude]} icon={greenIcon} />}
-        {green?.back && <Marker position={[green.back.latitude, green.back.longitude]} icon={greenIcon} />}
-        {gps && <Circle center={[gps.lat, gps.lng]} radius={5} pathOptions={{ color: "#094811" }} />}
-        <Recenter center={center} />
-      </MapContainer>
-    </div>
-  );
-}
-function Recenter({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => { map.setView(center); }, [center[0], center[1]]);
-  return null;
-}
+/* HoleMap moved to hole-map.client.tsx (client-only, leaflet needs window) */
 
 /* ─────── SUMMARY ─────── */
 function RoundSummary({ roundId, onDone }: { roundId: string; onDone: () => void }) {
