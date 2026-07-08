@@ -4,7 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   searchCourses, getCourse, startRound, getRound, updateHole,
-  finishRound, listRounds, getUserStats, deleteRound, listMyCourses,
+  finishRound, listRounds, getUserStats, deleteRound, listMyCourses, nearbyCourses,
 } from "@/lib/rounds.functions";
 import { distanceYards, getPlayerId } from "@/lib/gps";
 import markWhite from "@/assets/pf-mark-white.png.asset.json";
