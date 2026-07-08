@@ -149,14 +149,14 @@ export const updateHole = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const owns = await supabaseAdmin.from("rounds").select("id").eq("id", data.roundId).eq("player_id", data.playerId).maybeSingle();
     if (!owns.data) throw new Error("Not authorized");
-    const allowed = ["score", "putts", "fairway_hit", "gir", "penalties", "drive_distance", "notes"];
+    const allowed = ["score", "putts", "fairway_hit", "gir", "penalties", "drive_distance", "notes", "sand_shots", "up_down", "sand_save", "fairway_direction"];
     const patch: any = {};
     for (const k of allowed) if (k in data.patch) patch[k] = data.patch[k];
-    // auto GIR if score present and putts present
+    // auto GIR if score present and putts present, and not manually overridden
     const holeRow = await supabaseAdmin.from("round_holes").select("*").eq("round_id", data.roundId).eq("hole_number", data.holeNumber).maybeSingle();
     if (!holeRow.data) throw new Error("Hole not found");
     const merged = { ...holeRow.data, ...patch };
-    if (typeof merged.score === "number" && typeof merged.putts === "number" && typeof merged.par === "number") {
+    if (!("gir" in data.patch) && typeof merged.score === "number" && typeof merged.putts === "number" && typeof merged.par === "number") {
       patch.gir = merged.score - merged.putts <= merged.par - 2;
     }
     await supabaseAdmin.from("round_holes").update(patch).eq("round_id", data.roundId).eq("hole_number", data.holeNumber);
