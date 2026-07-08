@@ -658,7 +658,7 @@ function History({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) 
 }
 
 /* ═════════════════════════════════════════════ PERFORMANCE ═════════════════════════════════════════════ */
-export function PerformanceScreen({ bottomNav }: { bottomNav: React.ReactNode }) {
+export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.ReactNode; onBookBay?: () => void }) {
   const pid = getPlayerId();
   const [rounds, setRounds] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
