@@ -336,6 +336,8 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
   const [tab, setTab] = useState<"gps" | "map" | "score">("gps");
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
 
+  const [units, setU] = useUnits();
+
   useEffect(() => {
     getRound({ data: { playerId: pid, roundId } }).then(setData);
   }, [pid, roundId]);
@@ -359,7 +361,6 @@ function ActiveRound({ roundId, onExit, onFinish }: { roundId: string; onExit: (
     ? { front: holeCoords.green_front, center: holeCoords.green_center, back: holeCoords.green_back }
     : null;
 
-  const [units, setU] = useUnits();
 
   const saveHole = async (patch: any) => {
     await updateHole({ data: { playerId: pid, roundId, holeNumber: hole.hole_number, patch } });
