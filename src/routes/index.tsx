@@ -973,7 +973,7 @@ function BottomNav({ active, onTab }: { active: NavTab; onTab: (s: Screen) => vo
         <span className="nav-lbl">Performance</span>
       </button>
       <button className={"nav-item" + (active === "venue" ? " active" : "")} onClick={() => onTab("venue")}>
-        <span className="nav-beta" style={{ opacity: 0 }}>BETA</span>
+        <span className="nav-green">Book Here</span>
         <span className="nav-ico"><GolferIcon size={22} /></span>
         <span className="nav-lbl">Playfair Venue</span>
       </button>
