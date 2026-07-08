@@ -760,26 +760,60 @@ function BagScreen(props: {
   );
 }
 
-/* ───── PROFILE ───── */
+/* ───── ME (profile) ───── */
 function ProfileScreen(props: {
   profile: Profile;
   setProfile: (p: Profile) => void;
   hcp: number;
   initials: string;
   avatar: string | null;
-  onAvatarClick: () => void;
+  setAvatar: (a: string | null) => void;
+  userId: string | null;
   onEditHcp: () => void;
   onViewBag: () => void;
   onLogout: () => void;
   active: NavTab;
   onTab: (s: Screen) => void;
 }) {
-  const { profile, setProfile, hcp, initials, avatar, onAvatarClick, onEditHcp, onViewBag, onLogout, active, onTab } = props;
+  const { profile, setProfile, hcp, initials, avatar, setAvatar, userId, onEditHcp, onViewBag, onLogout, active, onTab } = props;
   const [editing, setEditing] = useState<keyof Profile | null>(null);
   const [draft, setDraft] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const localFileRef = useRef<HTMLInputElement>(null);
+  const [buddies, setBuddies] = useState<any>(null);
+
+  useEffect(() => {
+    // Load avatar from profile row (may already be a signed URL) + buddies
+    if (!userId) return;
+    supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle().then(({ data }) => {
+      if (data?.avatar_url) setAvatar(data.avatar_url);
+    });
+    import("@/lib/buddies.functions").then((m) => m.listBuddies()).then(setBuddies).catch(() => {});
+  }, [userId, setAvatar]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f || !userId) return;
+    setUploadErr(null);
+    setUploading(true);
+    try {
+      const ext = f.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${userId}/avatar.${ext}`;
+      const up = await supabase.storage.from("avatars").upload(path, f, { upsert: true, contentType: f.type });
+      if (up.error) throw up.error;
+      const { setAvatarFromPath } = await import("@/lib/avatar.functions");
+      const res = await setAvatarFromPath({ data: { path } });
+      setAvatar(res.url);
+    } catch (err: any) {
+      setUploadErr(err?.message || "Upload failed");
+    }
+    setUploading(false);
+    if (e.target) e.target.value = "";
+  };
 
   const startEdit = (k: keyof Profile) => {
-    if (k === "email") return; // email is auth-managed
+    if (k === "email") return;
     setEditing(k);
     setDraft(profile[k]);
   };
@@ -817,12 +851,14 @@ function ProfileScreen(props: {
     <div className="screen">
       <div className="profile-top">
         <img src={logoWhite.url} alt="playfair" className="profile-top-logo" />
-        <div className="avatar" onClick={onAvatarClick}>
+        <div className="avatar" onClick={() => localFileRef.current?.click()}>
           {avatar ? <img src={avatar} alt="avatar" /> : <span>{initials}</span>}
-          <div className="avatar-edit">Edit</div>
+          <div className="avatar-edit">{uploading ? "…" : "Edit"}</div>
         </div>
         <div className="profile-name-h">{profile.firstName} {profile.lastName}</div>
         <div className="profile-email-h">{profile.email}</div>
+        {uploadErr && <div style={{ color: "#ff6b6b", fontSize: 12, marginTop: 6 }}>{uploadErr}</div>}
+        <input ref={localFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarChange} />
       </div>
       <div className="profile-body">
         <div className="section-lbl" style={{ marginTop: 4 }}>Personal details</div>
@@ -846,6 +882,36 @@ function ProfileScreen(props: {
             <span className="pf-lbl">My bag</span>
             <button className="pf-edit" onClick={onViewBag}>View bag →</button>
           </div>
+        </div>
+        <div className="section-lbl">Buddies</div>
+        <div className="pf-section">
+          {!buddies && <div className="pf-row"><span className="pf-lbl">Loading…</span></div>}
+          {buddies && buddies.accepted.length === 0 && buddies.pendingIncoming.length === 0 && (
+            <div className="pf-row"><span className="pf-lbl" style={{ color: "#888" }}>No buddies yet. Add them from a round.</span></div>
+          )}
+          {buddies?.pendingIncoming?.map((b: any) => (
+            <div className="pf-row" key={b.id}>
+              <span className="pf-lbl">{b.profile?.first_name} {b.profile?.last_name} <span style={{ color: "#888" }}>wants to be your buddy</span></span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="pf-edit" onClick={async () => {
+                  const m = await import("@/lib/buddies.functions");
+                  await m.respondBuddyRequest({ data: { buddyId: b.id, accept: true } });
+                  m.listBuddies().then(setBuddies);
+                }}>Accept</button>
+                <button className="pf-edit" style={{ color: "#c0392b" }} onClick={async () => {
+                  const m = await import("@/lib/buddies.functions");
+                  await m.respondBuddyRequest({ data: { buddyId: b.id, accept: false } });
+                  m.listBuddies().then(setBuddies);
+                }}>Decline</button>
+              </div>
+            </div>
+          ))}
+          {buddies?.accepted?.map((b: any) => (
+            <div className="pf-row" key={b.id}>
+              <span className="pf-lbl">{b.profile?.first_name} {b.profile?.last_name}</span>
+              <span style={{ fontSize: 12, color: "#888" }}>HCP {b.profile?.handicap ?? "—"}</span>
+            </div>
+          ))}
         </div>
         <div className="section-lbl">Account</div>
         <div className="pf-section">
