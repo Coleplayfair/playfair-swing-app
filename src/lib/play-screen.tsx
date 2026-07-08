@@ -749,6 +749,17 @@ export function PerformanceScreen({ bottomNav, onBookBay }: { bottomNav: React.R
             <PerfMetric label="Best" value={stats?.best ? (stats.best.total_score - stats.best.total_par >= 0 ? `+${stats.best.total_score - stats.best.total_par}` : `${stats.best.total_score - stats.best.total_par}`) : "—"} />
           </div>
         </div>
+
+        {onBookBay && (
+          <>
+            <button className="pf-btn-play pf-btn-play-full" onClick={onBookBay}>
+              Book Indoor Bay →
+            </button>
+            <div className="pf-note" style={{ padding: "24px 8px", fontSize: 12, color: "#999" }}>
+              Advanced stats and insights are coming soon.
+            </div>
+          </>
+        )}
       </div>
       {bottomNav}
     </div>
