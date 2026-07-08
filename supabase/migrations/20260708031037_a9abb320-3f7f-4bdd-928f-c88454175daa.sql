@@ -1,0 +1,1 @@
+ALTER TABLE public.courses_cache ADD COLUMN IF NOT EXISTS photo_name TEXT; ALTER TABLE public.courses_cache ADD COLUMN IF NOT EXISTS photo_checked_at TIMESTAMPTZ;
